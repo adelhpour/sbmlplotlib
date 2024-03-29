@@ -62,8 +62,8 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
             if (offset_x or offset_y) and slope:
                 offset_x += 1.5 * math.cos(slope)
                 offset_y += 1.5 * math.sin(slope)
-            bbox_x = features['boundingBox']['x'] + offset_x
-            bbox_y = features['boundingBox']['y'] + offset_y
+            bbox_x = features['boundingBox']['x']
+            bbox_y = features['boundingBox']['y']
             bbox_width = features['boundingBox']['width']
             bbox_height = features['boundingBox']['height']
 
