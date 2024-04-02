@@ -4,9 +4,10 @@ import math
 
 
 class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
-    def __init__(self):
+    def __init__(self, use_name_as_text_label=True):
         super().__init__()
         self.sbml_network_editor = None
+        self.use_name_as_text_label = use_name_as_text_label
 
     def extract_info(self, graph):
         super().extract_info(graph)
@@ -268,7 +269,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_go_text_features(self, entity_id, graphical_object_index):
         text_features = []
         for tg_index in range(self.sbml_network_editor.getNumTextGlyphs(entity_id, graphical_object_index)):
-            features = {'features': {'plainText': self.sbml_network_editor.getText(entity_id, graphical_object_index),
+            features = {'features': {'plainText': self.sbml_network_editor.getText(entity_id, graphical_object_index, use_name_as_text_label=self.use_name_as_text_label),
                                      'boundingBox': self.extract_bounding_box_features(entity_id,
                                                                                        graphical_object_index),
                                      'graphicalText': self.extract_text_features(entity_id, graphical_object_index)}}

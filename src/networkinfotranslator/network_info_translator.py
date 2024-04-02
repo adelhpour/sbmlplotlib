@@ -7,16 +7,16 @@ from .exports.export_figure_skia import NetworkInfoExportToSkia
 from .exports.export_escher import NetworkInfoExportToEscher
 
 
-def import_sbml_export_figure(import_file, file_name=""):
-    import_from_sbml = NetworkInfoImportFromSBMLModel()
+def import_sbml_export_figure(import_file, file_name="", use_name_as_text_label=True):
+    import_from_sbml = NetworkInfoImportFromSBMLModel(use_name_as_text_label)
     import_from_sbml.extract_info(import_file)
     export_to_figure = NetworkInfoExportToSkia()
     export_to_figure.extract_graph_info(import_from_sbml)
     export_to_figure.export(file_name)
 
 
-def import_sbml_export_pil_image(import_file):
-    import_from_sbml = NetworkInfoImportFromSBMLModel()
+def import_sbml_export_pil_image(import_file, use_name_as_text_label=True):
+    import_from_sbml = NetworkInfoImportFromSBMLModel(use_name_as_text_label)
     import_from_sbml.extract_info(import_file)
     export_to_figure = NetworkInfoExportToSkia()
     export_to_figure.extract_graph_info(import_from_sbml)
