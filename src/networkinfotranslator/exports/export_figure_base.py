@@ -43,6 +43,11 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
             # reaction graphical shape
             elif 'boundingBox' in list(reaction['features']):
                 self.add_graphical_shape_to_scene(reaction['features'], z_order=4)
+        # reaction text
+        if 'texts' in list(reaction.keys()):
+            for text in reaction['texts']:
+                if 'features' in list(text.keys()):
+                    self.add_text_to_scene(text['features'], z_order=6)
 
         # species references
         if 'speciesReferences' in list(reaction.keys()):

@@ -4,10 +4,11 @@ import math
 
 
 class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
-    def __init__(self, use_name_as_text_label=True):
+    def __init__(self, use_name_as_text_label=True, display_rections_text_label=False):
         super().__init__()
         self.sbml_network_editor = None
         self.use_name_as_text_label = use_name_as_text_label
+        self.display_rections_text_label = display_rections_text_label
 
     def extract_info(self, graph):
         super().extract_info(graph)
@@ -145,6 +146,8 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_reaction_features(self, reaction):
         if reaction['referenceId']:
             reaction['features'] = self.extract_go_general_features(reaction['referenceId'], reaction['index'])
+            if self.display_rections_text_label:
+                reaction['texts'] = self.extract_go_text_features(reaction['referenceId'], reaction['index'])
             self.extract_extents(self.sbml_network_editor.getX(reaction['referenceId'], reaction['index']),
                                  self.sbml_network_editor.getY(reaction['referenceId'], reaction['index']),
                                  self.sbml_network_editor.getWidth(reaction['referenceId'], reaction['index']),
@@ -270,7 +273,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         text_features = []
         for tg_index in range(self.sbml_network_editor.getNumTextGlyphs(entity_id, graphical_object_index)):
             features = {'features': {'plainText': self.sbml_network_editor.getText(entity_id, graphical_object_index, use_name_as_text_label=self.use_name_as_text_label),
-                                     'boundingBox': self.extract_bounding_box_features(entity_id,
+                                     'boundingBox': self.extract_text_bounding_box_features(entity_id,
                                                                                        graphical_object_index),
                                      'graphicalText': self.extract_text_features(entity_id, graphical_object_index)}}
             text_features.append(features)
@@ -311,8 +314,13 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         return features
 
     def extract_bounding_box_features(self, entity_id, graphical_object_index):
-        return {'x': self.sbml_network_editor.getX(entity_id, graphical_object_index), 'y': self.sbml_network_editor.getY(entity_id, graphical_object_index),
+        return {'x': self.sbml_network_editor.getTextX(entity_id, graphical_object_index), 'y': self.sbml_network_editor.getY(entity_id, graphical_object_index),
                 'width': self.sbml_network_editor.getWidth(entity_id, graphical_object_index), 'height': self.sbml_network_editor.getHeight(entity_id, graphical_object_index)}
+
+    def extract_text_bounding_box_features(self, entity_id, graphical_object_index):
+        return {'x': self.sbml_network_editor.getTextX(entity_id, graphical_object_index), 'y': self.sbml_network_editor.getTextY(entity_id, graphical_object_index),
+                'width': self.sbml_network_editor.getTextWidth(entity_id, graphical_object_index), 'height': self.sbml_network_editor.getTextHeight(entity_id, graphical_object_index)}
+
 
     def extract_graphical_shape_features(self, entity_id, graphical_object_index):
         graphical_shape_info = {}
