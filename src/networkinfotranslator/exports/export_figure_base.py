@@ -43,6 +43,11 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
             # reaction graphical shape
             elif 'boundingBox' in list(reaction['features']):
                 self.add_graphical_shape_to_scene(reaction['features'], z_order=4)
+        # reaction text
+        if 'texts' in list(reaction.keys()):
+            for text in reaction['texts']:
+                if 'features' in list(text.keys()):
+                    self.add_text_to_scene(text['features'], z_order=6)
 
         # species references
         if 'speciesReferences' in list(reaction.keys()):
@@ -62,8 +67,8 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
             if (offset_x or offset_y) and slope:
                 offset_x += 1.5 * math.cos(slope)
                 offset_y += 1.5 * math.sin(slope)
-            bbox_x = features['boundingBox']['x'] + offset_x
-            bbox_y = features['boundingBox']['y'] + offset_y
+            bbox_x = features['boundingBox']['x']
+            bbox_y = features['boundingBox']['y']
             bbox_width = features['boundingBox']['width']
             bbox_height = features['boundingBox']['height']
 

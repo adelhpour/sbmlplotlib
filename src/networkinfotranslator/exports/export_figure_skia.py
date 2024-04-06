@@ -87,8 +87,6 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
             ellipse['translate'] = {'x': abs(self.graph_info.extents['minX']) + self.padding + offset_x,
                                               'y': abs(self.graph_info.extents['minY']) + self.padding + offset_y}
             ellipse['rotate'] = slope * 180.0 / 3.141592653589793
-            cx -= offset_x
-            cy -= offset_y
             ellipse['rectangle'] = skia.Rect(cx - rx, cy - ry, cx + rx, cy + ry)
         else:
             ellipse['rectangle'] = skia.Rect(abs(self.graph_info.extents['minX']) + self.padding + cx - rx,

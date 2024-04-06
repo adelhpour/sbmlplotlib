@@ -1,4 +1,4 @@
-import libsbmlnetworkeditor
+import libsbmlnetwork
 from .export_base import NetworkInfoExportBase
 import json
 from pathlib import Path as pathlib
@@ -148,14 +148,14 @@ class NetworkInfoExportToEscher(NetworkInfoExportBase):
         segment_features = {}
         if 'curve' in list(species_reference['features'].keys()):
             segment_features['from_node_id'] = reaction['id']
-            for cs_index in range(libsbmlnetworkeditor.getNumCurveSegments(species_reference['glyphObject']) - 1):
+            for cs_index in range(libsbmlnetwork.getNumCurveSegments(species_reference['glyphObject']) - 1):
                 segment_features['to_node_id'] = reaction['id'] + "." + species_reference['id'] + ".M" + str(cs_index + 1)
                 segment_features.update(self.get_segment_base_point_features(species_reference['features']['curve'], cs_index))
                 segments.update({segment_id: segment_features})
                 segment_id = species_reference['id'] + ".S" + str(cs_index + 1)
                 segment_features['from_node_id'] = reaction['id'] + "." + species_reference['id'] + ".M" + str(cs_index + 1)
             segment_features.update(self.get_segment_base_point_features(species_reference['features']['curve'], -1))
-            segment_features['to_node_id'] = libsbmlnetworkeditor.getSpeciesGlyphId(species_reference['glyphObject'])
+            segment_features['to_node_id'] = libsbmlnetwork.getSpeciesGlyphId(species_reference['glyphObject'])
         segments.update({segment_id: segment_features})
         return segments
 
