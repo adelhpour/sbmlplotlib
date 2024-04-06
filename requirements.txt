@@ -1,6 +1,5 @@
-libsbmlnetwork==0.0.16
+libsbmlnetwork>=0.0.17
 skia-python
 numpy
-python-libsbml
 webcolors
 pillow
