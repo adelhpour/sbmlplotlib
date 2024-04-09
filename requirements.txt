@@ -1,4 +1,5 @@
 libsbmlnetwork>=0.0.18
+python-libsbml
 skia-python
 numpy
 webcolors
