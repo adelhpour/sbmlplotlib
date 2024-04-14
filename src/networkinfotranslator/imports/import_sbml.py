@@ -314,7 +314,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         return features
 
     def extract_bounding_box_features(self, entity_id, graphical_object_index):
-        return {'x': self.sbml_network.getTextX(entity_id, graphical_object_index), 'y': self.sbml_network.getY(entity_id, graphical_object_index),
+        return {'x': self.sbml_network.getX(entity_id, graphical_object_index), 'y': self.sbml_network.getY(entity_id, graphical_object_index),
                 'width': self.sbml_network.getWidth(entity_id, graphical_object_index), 'height': self.sbml_network.getHeight(entity_id, graphical_object_index)}
 
     def extract_text_bounding_box_features(self, entity_id, graphical_object_index):
