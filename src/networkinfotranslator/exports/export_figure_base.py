@@ -62,6 +62,10 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
             # line endings
             self.add_line_endings_to_scene(species_reference['features'])
 
+            # null species
+            if self.has_null_species(species_reference):
+                self.add_null_graphical_shape_to_scene(species_reference)
+
     def add_graphical_shape_to_scene(self, features, offset_x=0.0, offset_y=0.0, slope=0.0, z_order=0):
         if 'boundingBox' in list(features.keys()):
             if (offset_x or offset_y) and slope:
@@ -261,6 +265,38 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                                                stroke_color, stroke_width, stroke_dash_array, fill_color,
                                                offset_x, offset_y, slope, z_order)
 
+    def add_null_graphical_shape_to_scene(self, species_reference):
+        if 'features' in list(species_reference.keys()) and 'role' in list(species_reference.keys()):
+            features = species_reference['features']
+            role = species_reference['role']
+            stroke_color = 'black'
+            stroke_width = 2.0
+            stroke_dash_array = 'solid'
+            fill_color = 'white'
+            z_order = 5
+
+            radius = 12.5
+            padding = 7.5
+            center_x = 0.0
+            center_y = 0.0
+            if role.lower() == "substrate" or role.lower() == "sidesubstrate" or role.lower() == "side substrate" or \
+                    role.lower() == "reactant":
+                if 'startPoint' in list(features.keys()) and 'endPoint' in list(features.keys()):
+                    center_x = features['startPoint']['x'] + (radius + padding) * math.cos(features['startSlope'])
+                    center_y = features['startPoint']['y'] + (radius + padding) * math.sin(features['startSlope'])
+            else:
+                if 'endPoint' in list(features.keys()) and 'endPoint' in list(features.keys()):
+                    center_x = features['endPoint']['x'] + (radius + padding) * math.cos(features['endSlope'])
+                    center_y = features['endPoint']['y'] + (radius + padding) * math.sin(features['endSlope'])
+
+            curve = [{'startX': center_x - radius, 'startY': center_y + radius,
+                      'endX': center_x + radius, 'endY': center_y - radius}]
+
+            self.draw_ellipse(center_x, center_y, radius, radius,
+                              stroke_color, stroke_width, stroke_dash_array, fill_color,
+                              0, 0, 0, z_order)
+            self.draw_curve(curve, stroke_color, stroke_width, stroke_dash_array, z_order + 1)
+
     def add_curve_to_scene(self, features, z_order=1):
         if 'curve' in list(features.keys()):
             # default features
@@ -401,6 +437,15 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                                                           offset_x=features['endPoint']['x'],
                                                           offset_y=features['endPoint']['y'],
                                                           slope=features['endSlope'], z_order=3)
+
+    @staticmethod
+    def has_null_species(species_reference):
+        if 'species' in list(species_reference.keys()) and not species_reference['species'] and \
+                'species_glyph_id' in list(species_reference.keys()) and \
+                species_reference['species_glyph_id'].lower().find("dummy"):
+            return True
+
+        return False
 
     def draw_background_canvas(self, background_color):
         pass
