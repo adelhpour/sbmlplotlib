@@ -271,39 +271,44 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
 
     def extract_go_text_features(self, entity_id, graphical_object_index):
         text_features = []
-        for tg_index in range(self.sbml_network.getNumTextGlyphs(entity_id, graphical_object_index)):
-            features = {'features': {'plainText': self.sbml_network.getText(entity_id, graphical_object_index, use_name_as_text_label=self.use_name_as_text_label),
+        for text_glyph_index in range(self.sbml_network.getNumTextGlyphs(entity_id, graphical_object_index)):
+            features = {'features': {'plainText': self.sbml_network.getText(entity_id,
+                                                                            graphical_object_index=graphical_object_index,
+                                                                            text_glyph_index=text_glyph_index,
+                                                                            use_name_as_text_label=self.use_name_as_text_label),
                                      'boundingBox': self.extract_text_bounding_box_features(entity_id,
-                                                                                       graphical_object_index),
-                                     'graphicalText': self.extract_text_features(entity_id, graphical_object_index)}}
+                                                                                            graphical_object_index,
+                                                                                            text_glyph_index),
+                                     'graphicalText': self.extract_text_features(entity_id,
+                                                                                 graphical_object_index, text_glyph_index)}}
             text_features.append(features)
 
         return text_features
 
-    def extract_text_features(self, entity_id, graphical_object_index):
+    def extract_text_features(self, entity_id, graphical_object_index, text_glyph_index):
         features = {}
         # get stroke color
-        if self.sbml_network.isSetFontColor(entity_id, graphical_object_index):
-            features['strokeColor'] = self.sbml_network.getFontColor(entity_id, graphical_object_index)
+        if self.sbml_network.isSetFontColor(entity_id, graphical_object_index, text_glyph_index):
+            features['strokeColor'] = self.sbml_network.getFontColor(entity_id, graphical_object_index, text_glyph_index)
         # get font family
-        if self.sbml_network.isSetFontFamily(entity_id, graphical_object_index):
-            features['fontFamily'] = self.sbml_network.getFontFamily(entity_id, graphical_object_index)
+        if self.sbml_network.isSetFontFamily(entity_id, graphical_object_index, text_glyph_index):
+            features['fontFamily'] = self.sbml_network.getFontFamily(entity_id, graphical_object_index, text_glyph_index)
         # get font size
-        if self.sbml_network.isSetFontSize(entity_id, graphical_object_index):
-            features['fontSize'] = {'abs': self.sbml_network.getFontSize(entity_id, graphical_object_index),
+        if self.sbml_network.isSetFontSize(entity_id, graphical_object_index, text_glyph_index):
+            features['fontSize'] = {'abs': self.sbml_network.getFontSize(entity_id, graphical_object_index, text_glyph_index),
                                      'rel': 0.0}
         # get font weight
-        if self.sbml_network.isSetFontWeight(entity_id, graphical_object_index):
-            features['fontWeight'] = self.sbml_network.getFontWeight(entity_id, graphical_object_index)
+        if self.sbml_network.isSetFontWeight(entity_id, graphical_object_index, text_glyph_index):
+            features['fontWeight'] = self.sbml_network.getFontWeight(entity_id, graphical_object_index, text_glyph_index)
         # get font style
-        if self.sbml_network.isSetFontStyle(entity_id, graphical_object_index):
-            features['fontStyle'] = self.sbml_network.getFontStyle(entity_id, graphical_object_index)
+        if self.sbml_network.isSetFontStyle(entity_id, graphical_object_index, text_glyph_index):
+            features['fontStyle'] = self.sbml_network.getFontStyle(entity_id, graphical_object_index, text_glyph_index)
         # get horizontal text anchor
-        if self.sbml_network.isSetTextHorizontalAlignment(entity_id, graphical_object_index):
-            features['hTextAnchor'] = self.sbml_network.getTextHorizontalAlignment(entity_id, graphical_object_index)
+        if self.sbml_network.isSetTextHorizontalAlignment(entity_id, graphical_object_index, text_glyph_index):
+            features['hTextAnchor'] = self.sbml_network.getTextHorizontalAlignment(entity_id, graphical_object_index, text_glyph_index)
         # get vertical text anchor
-        if self.sbml_network.isSetTextVerticalAlignment(entity_id, graphical_object_index):
-            features['vTextAnchor'] = self.sbml_network.getTextVerticalAlignment(entity_id, graphical_object_index)
+        if self.sbml_network.isSetTextVerticalAlignment(entity_id, graphical_object_index, text_glyph_index):
+            features['vTextAnchor'] = self.sbml_network.getTextVerticalAlignment(entity_id, graphical_object_index, text_glyph_index)
 
         return features
 
@@ -317,10 +322,11 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         return {'x': self.sbml_network.getX(entity_id, graphical_object_index), 'y': self.sbml_network.getY(entity_id, graphical_object_index),
                 'width': self.sbml_network.getWidth(entity_id, graphical_object_index), 'height': self.sbml_network.getHeight(entity_id, graphical_object_index)}
 
-    def extract_text_bounding_box_features(self, entity_id, graphical_object_index):
-        return {'x': self.sbml_network.getTextX(entity_id, graphical_object_index), 'y': self.sbml_network.getTextY(entity_id, graphical_object_index),
-                'width': self.sbml_network.getTextWidth(entity_id, graphical_object_index), 'height': self.sbml_network.getTextHeight(entity_id, graphical_object_index)}
-
+    def extract_text_bounding_box_features(self, entity_id, graphical_object_index, text_glyph_index):
+        return {'x': self.sbml_network.getTextX(entity_id, graphical_object_index, text_glyph_index),
+                'y': self.sbml_network.getTextY(entity_id, graphical_object_index, text_glyph_index),
+                'width': self.sbml_network.getTextWidth(entity_id, graphical_object_index, text_glyph_index),
+                'height': self.sbml_network.getTextHeight(entity_id, graphical_object_index, text_glyph_index)}
 
     def extract_graphical_shape_features(self, entity_id, graphical_object_index):
         graphical_shape_info = {}
