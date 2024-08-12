@@ -4,11 +4,14 @@ import math
 
 
 class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
-    def __init__(self, use_name_as_text_label=True, display_rections_text_label=False):
+    def __init__(self, use_name_as_text_label=True, display_compartments_text_label=True,
+                 display_species_text_label=True, display_reactions_text_label =False):
         super().__init__()
         self.sbml_network = None
         self.use_name_as_text_label = use_name_as_text_label
-        self.display_rections_text_label = display_rections_text_label
+        self.display_compartments_text_label = display_compartments_text_label
+        self.display_species_text_label = display_species_text_label
+        self.display_reactions_text_label = display_reactions_text_label
 
     def extract_info(self, graph):
         super().extract_info(graph)
@@ -130,7 +133,8 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_compartment_features(self, compartment):
         if compartment['referenceId']:
             compartment['features'] = self.extract_go_general_features(compartment['referenceId'], compartment['index'])
-            compartment['texts'] = self.extract_go_text_features(compartment['referenceId'], compartment['index'])
+            if self.display_compartments_text_label:
+                compartment['texts'] = self.extract_go_text_features(compartment['referenceId'], compartment['index'])
             self.extract_extents(self.sbml_network.getX(compartment['referenceId'], compartment['index']),
                                  self.sbml_network.getY(compartment['referenceId'], compartment['index']),
                                  self.sbml_network.getWidth(compartment['referenceId'], compartment['index']),
@@ -139,7 +143,8 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_species_features(self, species):
         if species['referenceId']:
             species['features'] = self.extract_go_general_features(species['referenceId'], species['index'])
-            species['texts'] = self.extract_go_text_features(species['referenceId'], species['index'])
+            if self.display_species_text_label:
+                species['texts'] = self.extract_go_text_features(species['referenceId'], species['index'])
             self.extract_extents(self.sbml_network.getX(species['referenceId'], species['index']),
                                  self.sbml_network.getY(species['referenceId'], species['index']),
                                  self.sbml_network.getWidth(species['referenceId'], species['index']),
@@ -148,7 +153,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_reaction_features(self, reaction):
         if reaction['referenceId']:
             reaction['features'] = self.extract_go_general_features(reaction['referenceId'], reaction['index'])
-            if self.display_rections_text_label:
+            if self.display_reactions_text_label:
                 reaction['texts'] = self.extract_go_text_features(reaction['referenceId'], reaction['index'])
             self.extract_extents(self.sbml_network.getX(reaction['referenceId'], reaction['index']),
                                  self.sbml_network.getY(reaction['referenceId'], reaction['index']),
