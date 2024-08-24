@@ -679,5 +679,8 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             if 'enableRotation' in list(line_ending['features'].keys()):
                 line_ending_definition.setEnableRotationalMapping(line_ending['features']['enableRotation'])
 
-    def export(self, file_name):
-        libsbml.writeSBMLToFile(self.document, file_name.split('.')[0] + ".xml")
+    def export(self, file_name=""):
+        if file_name == "":
+            return libsbml.writeSBMLToString(self.document)
+        else:
+            return libsbml.writeSBMLToFile(self.document, file_name.split('.')[0] + ".xml")

@@ -88,7 +88,7 @@ class NetworkInfoExportToNetworkEditor(NetworkInfoExportToJsonBase):
     def set_edge_nodes(self, edge, species_reference, reaction):
         species = {}
         for s in self.graph_info.species:
-            if s['referenceId'] == species_reference['species'] and s['id'] == species_reference['speciesGlyph']:
+            if s['referenceId'] == species_reference['species'] and s['id'] == species_reference['species_glyph_id']:
                 species = s
                 break
         if 'role' in list(species_reference.keys()):
@@ -410,18 +410,20 @@ class NetworkInfoExportToNetworkEditor(NetworkInfoExportToJsonBase):
                                      offset_y=line_ending['features']['boundingBox']['y'])
         return line_ending_style
 
-    def export(self, file_name="file"):
+    def export(self, file_name=""):
         position = {'x': self.graph_info.extents['minX'] + 0.5 * (self.graph_info.extents['maxX'] - self.graph_info.extents['minX']),
                     'y': self.graph_info.extents['minY'] + 0.5 * (self.graph_info.extents['maxY'] - self.graph_info.extents['minY'])}
         dimensions = {'width': self.graph_info.extents['maxX'] - self.graph_info.extents['minX'],
                       'height': self.graph_info.extents['maxY'] - self.graph_info.extents['minY']}
         graph_info = {'generated_by': "NetworkInfoTranslator",
-                      'name': pathlib(file_name).stem + "_graph",
+                      'name': pathlib(file_name).stem + "_graph" if file_name != "" else "file_graph",
                       'background-color': self.graph_info.background_color,
                       'position': position,
                       'dimensions': dimensions,
                       'nodes': self.nodes,
                       'edges': self.edges}
-        with open(file_name.split('.')[0] + ".json", 'w', encoding='utf8') as js_file:
-            json.dump(graph_info, js_file, indent=1)
-        return graph_info
+        if file_name == "":
+            return graph_info
+        else:
+            with open(file_name.split('.')[0] + ".json", 'w', encoding='utf8') as js_file:
+                json.dump(graph_info, js_file, indent=1)
