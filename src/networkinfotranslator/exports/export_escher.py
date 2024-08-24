@@ -1,4 +1,3 @@
-import libsbmlnetwork
 from .export_base import NetworkInfoExportBase
 import json
 from pathlib import Path as pathlib
@@ -68,11 +67,11 @@ class NetworkInfoExportToEscher(NetworkInfoExportBase):
 
     @staticmethod
     def initialize_species_reference_node(reaction, species_reference, sr_index):
-        species_reference_node_features = {'type': "multimarker"}
-        species_reference_node_features['x'] = 0.5 * (species_reference['features']['curve'][sr_index]['startX'] +
-                                                      species_reference['features']['curve'][sr_index - 1]['endX'])
-        species_reference_node_features['y'] = 0.5 * (species_reference['features']['curve'][sr_index]['startY'] +
-                                                      species_reference['features']['curve'][sr_index - 1]['endY'])
+        species_reference_node_features = {'type': "multimarker",
+                                           'x': 0.5 * (species_reference['features']['curve'][sr_index]['startX'] +
+                                                       species_reference['features']['curve'][sr_index - 1]['endX']),
+                                           'y': 0.5 * (species_reference['features']['curve'][sr_index]['startY'] +
+                                                       species_reference['features']['curve'][sr_index - 1]['endY'])}
         return {reaction['id'] + "." + species_reference['id'] + ".M" + str(sr_index + 1):
                     species_reference_node_features}
 
@@ -111,7 +110,6 @@ class NetworkInfoExportToEscher(NetworkInfoExportBase):
             escher_recaction[reaction['id']]['label_x'] += horizontal_padding
             escher_recaction[reaction['id']]['label_y'] += vertical_padding
 
-
         if 'speciesReferences' in list(reaction.keys()):
             segments = {}
             metabolites = []
@@ -126,36 +124,41 @@ class NetworkInfoExportToEscher(NetworkInfoExportBase):
             escher_recaction[reaction['id']]['metabolites'] = metabolites
 
     def get_reaction_reversibility(self, reaction):
-        if reaction['SBMLObject']:
-            return reaction['SBMLObject'].getReversible()
+        ## commented for now as import from sbml has changed. Need to update this
+        #if reaction['SBMLObject']:
+            #return reaction['SBMLObject'].getReversible()
         return False
 
-    def create_metabolite_from_product(self, species_reference):
+    @staticmethod
+    def create_metabolite_from_product(species_reference):
         coefficient = 1
-        if species_reference['SBMLObject']:
-            coefficient = species_reference['SBMLObject'].getStoichiometry()
+        ## commented for now as import from sbml has changed. Need to update this
+        #if species_reference['SBMLObject']:
+            #coefficient = species_reference['SBMLObject'].getStoichiometry()
         return {'bigg_id': species_reference['species'], 'coefficient': coefficient}
 
-    def create_metabolite_from_substrate(self, species_reference):
+    @staticmethod
+    def create_metabolite_from_substrate(species_reference):
         coefficient = -1
-        if species_reference['SBMLObject']:
-            coefficient = -1 * species_reference['SBMLObject'].getStoichiometry()
+        ## commented for now as import from sbml has changed. Need to update this
+        #if species_reference['SBMLObject']:
+            #coefficient = -1 * species_reference['SBMLObject'].getStoichiometry()
         return {'bigg_id': species_reference['species'], 'coefficient': coefficient}
 
     def create_segments(self, species_reference, reaction):
         segments = {}
-        segment_id = species_reference['id'] + ".S" + "0"
+        segment_id = ".S" + "0"
         segment_features = {}
         if 'curve' in list(species_reference['features'].keys()):
             segment_features['from_node_id'] = reaction['id']
-            for cs_index in range(libsbmlnetwork.getNumCurveSegments(species_reference['glyphObject']) - 1):
-                segment_features['to_node_id'] = reaction['id'] + "." + species_reference['id'] + ".M" + str(cs_index + 1)
+            for cs_index in range(len(species_reference['features']['curve'])):
+                segment_features['to_node_id'] = species_reference['reaction'] + "." + species_reference['species'] + ".M" + str(cs_index + 1)
                 segment_features.update(self.get_segment_base_point_features(species_reference['features']['curve'], cs_index))
                 segments.update({segment_id: segment_features})
-                segment_id = species_reference['id'] + ".S" + str(cs_index + 1)
-                segment_features['from_node_id'] = reaction['id'] + "." + species_reference['id'] + ".M" + str(cs_index + 1)
+                segment_id = species_reference['reaction'] + "." + species_reference['species'] + ".S" + str(cs_index + 1)
+                segment_features['from_node_id'] = species_reference['reaction'] + "." + species_reference['species'] + ".M" + str(cs_index + 1)
             segment_features.update(self.get_segment_base_point_features(species_reference['features']['curve'], -1))
-            segment_features['to_node_id'] = libsbmlnetwork.getSpeciesGlyphId(species_reference['glyphObject'])
+            segment_features['to_node_id'] = species_reference['species_glyph_id']
         segments.update({segment_id: segment_features})
         return segments
 
@@ -201,7 +204,7 @@ class NetworkInfoExportToEscher(NetworkInfoExportBase):
             return {'b1': {'x': curve[cs_index]['startX'], 'y': curve[cs_index]['startY']},
                     'b2': {'x': curve[cs_index]['endX'], 'y': curve[cs_index]['endY']}}
 
-    def export(self, file_name="file"):
+    def export(self, file_name=""):
         horizontal_margin = 75
         vertical_margin = 75
         position_x = self.graph_info.extents['minX'] - horizontal_margin
@@ -215,6 +218,15 @@ class NetworkInfoExportToEscher(NetworkInfoExportBase):
                       {'canvas': {'x': position_x, 'y': position_y, 'width': dimensions_width, 'height': dimensions_height},
                       'nodes': self.nodes,
                       'reactions': self.reactions}]
-        with open(file_name.split('.')[0] + ".json", 'w', encoding='utf8') as js_file:
-            json.dump(graph_info, js_file, indent=1)
-        return graph_info
+        if file_name == "":
+            return json.dumps(graph_info, indent=1)
+        else:
+            with open(self.get_valid_filename(file_name), 'w', encoding='utf8') as js_file:
+                json.dump(graph_info, js_file, indent=1)
+
+    @staticmethod
+    def get_valid_filename(file_name):
+        if file_name.split('.')[-1] != "json":
+            file_name += ".json"
+
+        return file_name
