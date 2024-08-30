@@ -80,9 +80,9 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
 
     def extract_extents(self, bounding_box_x, bounding_box_y, bounding_box_width, bounding_box_height):
         self.extents['minX'] = min(self.extents['minX'], bounding_box_x)
-        self.extents['maxX'] = max(self.extents['maxX'], bounding_box_x + bounding_box_width)
         self.extents['minY'] = min(self.extents['minY'], bounding_box_y)
-        self.extents['maxY'] = max(self.extents['maxY'], bounding_box_y + bounding_box_height)
+        self.extents['maxX'] = self.extents['minX'] + self.sbml_network.getCanvasWidth()
+        self.extents['maxY'] = self.extents['minY'] + self.sbml_network.getCanvasHeight()
 
     def add_compartment(self, compartment_id):
         for cg_index in range(self.sbml_network.getNumCompartmentGlyphs(compartment_id)):
