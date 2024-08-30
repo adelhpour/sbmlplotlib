@@ -681,12 +681,12 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
             text_shape_info['fontStyle'] = self.sbml_network.getFontStyle(entity_id, graphical_object_index)
 
         # get horizontal text anchor
-        if self.sbml_network.isSetHorizontalAlignment(entity_id, graphical_object_index):
-            text_shape_info['hTextAnchor'] = self.sbml_network.getHorizontalAlignment(entity_id, graphical_object_index)
+        if self.sbml_network.isSetTextHorizontalAlignment(entity_id, graphical_object_index):
+            text_shape_info['hTextAnchor'] = self.sbml_network.getTextHorizontalAlignment(entity_id, graphical_object_index)
 
         # get vertical text anchor
-        if self.sbml_network.isSetVerticalAlignment(entity_id, graphical_object_index):
-            text_shape_info['vTextAnchor'] = self.sbml_network.getVerticalAlignment(entity_id, graphical_object_index)
+        if self.sbml_network.isSetTextVerticalAlignment(entity_id, graphical_object_index):
+            text_shape_info['vTextAnchor'] = self.sbml_network.getTextVerticalAlignment(entity_id, graphical_object_index)
 
         return text_shape_info
 
