@@ -172,8 +172,9 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                         curve_segment["basePoint2X"] = self.sbml_network.getCurveSegmentBasePoint2X(reaction['referenceId'], reaction['index'], cs_index)
                         curve_segment["basePoint2Y"] = self.sbml_network.getCurveSegmentBasePoint2Y(reaction['referenceId'], reaction['index'], cs_index)
                     curve.append(curve_segment)
-                reaction['features']['curve'] = curve
-                reaction['features']['graphicalCurve'] = self.extract_curve_features(reaction['referenceId'], reaction['index'])
+                if curve:
+                    reaction['features']['curve'] = curve
+                    reaction['features']['graphicalCurve'] = self.extract_curve_features(reaction['referenceId'], reaction['index'])
 
     def extract_species_reference_features(self, species_reference):
         species_reference['features'] = {}
@@ -203,8 +204,9 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                     else:
                         species_reference['features']['endSlope'] = math.atan2(curve_segment['endY'] - curve_segment['startY'], curve_segment['endX'] - curve_segment['startX'])
                 curve.append(curve_segment)
-            species_reference['features']['curve'] = curve
-            species_reference['features']['graphicalCurve'] = self.extract_species_reference_curve_features(species_reference['reaction'], species_reference['reaction_glyph_index'], species_reference['species_reference_glyph_index'])
+            if curve:
+                species_reference['features']['curve'] = curve
+                species_reference['features']['graphicalCurve'] = self.extract_species_reference_curve_features(species_reference['reaction'], species_reference['reaction_glyph_index'], species_reference['species_reference_glyph_index'])
 
     def extract_color_features(self, color):
         color['features'] = {}
