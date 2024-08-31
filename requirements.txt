@@ -1,4 +1,4 @@
-libsbmlnetwork>=0.0.18
+libsbmlnetwork>=0.2.0
 python-libsbml
 skia-python
 numpy
