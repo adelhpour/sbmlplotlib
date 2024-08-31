@@ -442,7 +442,7 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
     def has_null_species(species_reference):
         if 'species' in list(species_reference.keys()) and not species_reference['species'] and \
                 'species_glyph_id' in list(species_reference.keys()) and \
-                species_reference['species_glyph_id'].lower().find("dummy"):
+                species_reference['species_glyph_id'].lower().find("dummy") != -1:
             return True
 
         return False

@@ -80,9 +80,9 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
 
     def extract_extents(self, bounding_box_x, bounding_box_y, bounding_box_width, bounding_box_height):
         self.extents['minX'] = min(self.extents['minX'], bounding_box_x)
-        self.extents['maxX'] = max(self.extents['maxX'], bounding_box_x + bounding_box_width)
         self.extents['minY'] = min(self.extents['minY'], bounding_box_y)
-        self.extents['maxY'] = max(self.extents['maxY'], bounding_box_y + bounding_box_height)
+        self.extents['maxX'] = self.extents['minX'] + self.sbml_network.getCanvasWidth()
+        self.extents['maxY'] = self.extents['minY'] + self.sbml_network.getCanvasHeight()
 
     def add_compartment(self, compartment_id):
         for cg_index in range(self.sbml_network.getNumCompartmentGlyphs(compartment_id)):
@@ -172,8 +172,9 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                         curve_segment["basePoint2X"] = self.sbml_network.getCurveSegmentBasePoint2X(reaction['referenceId'], reaction['index'], cs_index)
                         curve_segment["basePoint2Y"] = self.sbml_network.getCurveSegmentBasePoint2Y(reaction['referenceId'], reaction['index'], cs_index)
                     curve.append(curve_segment)
-                reaction['features']['curve'] = curve
-                reaction['features']['graphicalCurve'] = self.extract_curve_features(reaction['referenceId'], reaction['index'])
+                if curve:
+                    reaction['features']['curve'] = curve
+                    reaction['features']['graphicalCurve'] = self.extract_curve_features(reaction['referenceId'], reaction['index'])
 
     def extract_species_reference_features(self, species_reference):
         species_reference['features'] = {}
@@ -203,8 +204,9 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                     else:
                         species_reference['features']['endSlope'] = math.atan2(curve_segment['endY'] - curve_segment['startY'], curve_segment['endX'] - curve_segment['startX'])
                 curve.append(curve_segment)
-            species_reference['features']['curve'] = curve
-            species_reference['features']['graphicalCurve'] = self.extract_species_reference_curve_features(species_reference['reaction'], species_reference['reaction_glyph_index'], species_reference['species_reference_glyph_index'])
+            if curve:
+                species_reference['features']['curve'] = curve
+                species_reference['features']['graphicalCurve'] = self.extract_species_reference_curve_features(species_reference['reaction'], species_reference['reaction_glyph_index'], species_reference['species_reference_glyph_index'])
 
     def extract_color_features(self, color):
         color['features'] = {}
@@ -679,12 +681,12 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
             text_shape_info['fontStyle'] = self.sbml_network.getFontStyle(entity_id, graphical_object_index)
 
         # get horizontal text anchor
-        if self.sbml_network.isSetHorizontalAlignment(entity_id, graphical_object_index):
-            text_shape_info['hTextAnchor'] = self.sbml_network.getHorizontalAlignment(entity_id, graphical_object_index)
+        if self.sbml_network.isSetTextHorizontalAlignment(entity_id, graphical_object_index):
+            text_shape_info['hTextAnchor'] = self.sbml_network.getTextHorizontalAlignment(entity_id, graphical_object_index)
 
         # get vertical text anchor
-        if self.sbml_network.isSetVerticalAlignment(entity_id, graphical_object_index):
-            text_shape_info['vTextAnchor'] = self.sbml_network.getVerticalAlignment(entity_id, graphical_object_index)
+        if self.sbml_network.isSetTextVerticalAlignment(entity_id, graphical_object_index):
+            text_shape_info['vTextAnchor'] = self.sbml_network.getTextVerticalAlignment(entity_id, graphical_object_index)
 
         return text_shape_info
 

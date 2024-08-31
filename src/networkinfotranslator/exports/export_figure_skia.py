@@ -152,7 +152,7 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
                    v_text_anchor, h_text_anchor, z_order):
         text = {}
         text_font = skia.Font(None, font_size)
-        while text_font.measureText(plain_text) > width:
+        while text_font.measureText(plain_text) > abs(width):
             font_size = font_size - 1
             text_font = skia.Font(None, font_size)
         if font_weight == "bold":
