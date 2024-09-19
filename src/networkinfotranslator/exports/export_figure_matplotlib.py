@@ -18,14 +18,14 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
         self.sbml_figure.set_size_inches(1.0, 1.0)
 
     def draw_image(self, x, y, width, height,
-                   offset_x, offset_y, slope, z_order):
+                   offset_x, offset_y, slope, layer, sublayer):
         y = self.graph_info.extents['maxY'] - (y + height)
         offset_y = self.graph_info.extents['maxY'] - offset_y
         with cbook.get_sample_data(href) as image_file:
             image = plt.imread(image_file)
             image_axes = self.sbml_axes.imshow(image)
             image_axes.set_extent([x, x + width, y + height, y])
-            image_axes.set_zorder(z_order)
+            image_axes.set_zorder(layer)
             if offset_x or offset_y:
                 image_axes.set_transform(plttransform.Affine2D().
                                          rotate_around(offset_x, offset_y,
@@ -38,7 +38,7 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
 
     def draw_rounded_rectangle(self, x, y, width, height,
                                stroke_color, stroke_width, stroke_dash_array, fill_color,
-                               corner_radius_x, corner_radius_y, offset_x, offset_y, slope, z_order):
+                               corner_radius_x, corner_radius_y, offset_x, offset_y, slope, layer, sublayer):
         y = self.graph_info.extents['maxY'] - (y + height)
         offset_y = self.graph_info.extents['maxY'] - offset_y
         slope = -1 * slope
@@ -47,7 +47,7 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
                                    facecolor=self.graph_info.find_color_value(fill_color),
                                    fill=True,
                                    linewidth=stroke_width,
-                                   zorder=z_order, antialiased=True)
+                                   zorder=layer, antialiased=True)
         fancy_box.set_boxstyle("round", rounding_size=0.5 * (corner_radius_x + corner_radius_y))
         if offset_x or offset_y:
             fancy_box.set_transform(plttransform.Affine2D().
@@ -62,7 +62,7 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
 
     def draw_simple_rectangle(self, x, y, width, height,
                               stroke_color, stroke_width, stroke_dash_array, fill_color,
-                              offset_x, offset_y, slope, z_order):
+                              offset_x, offset_y, slope, layer, sublayer):
         y = self.graph_info.extents['maxY'] - (y + height)
         offset_y = self.graph_info.extents['maxY'] - offset_y
         slope = -1 * slope
@@ -70,7 +70,7 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
                               edgecolor=self.graph_info.find_color_value(stroke_color, False),
                               facecolor=self.graph_info.find_color_value(fill_color), fill=True,
                               linewidth=stroke_width,
-                              zorder=z_order, antialiased=True)
+                              zorder=layer, antialiased=True)
         if offset_x or offset_y:
             rectangle.set_transform(plttransform.Affine2D().
                                     rotate_around(offset_x, offset_y,
@@ -84,7 +84,7 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
 
     def draw_ellipse(self, cx, cy, rx, ry,
                      stroke_color, stroke_width, stroke_dash_array, fill_color,
-                     offset_x, offset_y, slope, z_order):
+                     offset_x, offset_y, slope, layer, sublayer):
         cy = self.graph_info.extents['maxY'] - (cy + ry)
         offset_y = self.graph_info.extents['maxY'] - offset_y
         slope = -1 * slope
@@ -93,7 +93,7 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
                           edgecolor=self.graph_info.find_color_value(stroke_color, False),
                           facecolor=self.graph_info.find_color_value(fill_color), fill=True,
                           linewidth=stroke_width,
-                          zorder=z_order, antialiased=True)
+                          zorder=layer, antialiased=True)
         if offset_x or offset_y:
             ellipse.set_transform(plttransform.Affine2D().rotate_around(offset_x,
                                                                         offset_y,
@@ -106,7 +106,7 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
 
     def draw_polygon(self, vertices, width, height,
                      stroke_color, stroke_width, stroke_dash_array, fill_color,
-                     offset_x, offset_y, slope, z_order):
+                     offset_x, offset_y, slope, layer, sublayer):
         vertices[:, 1] = np.amax(vertices, axis=0)[1] - vertices[:, 1]
         offset_y = self.graph_info.extents['maxY'] - offset_y
         slope = -1 * slope
@@ -126,12 +126,11 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
                               edgecolor=self.graph_info.find_color_value(stroke_color, False),
                               facecolor=self.graph_info.find_color_value(fill_color),
                               fill=True, linewidth=stroke_width,
-                              zorder=z_order, antialiased=True)
+                              zorder=layer, antialiased=True)
         self.sbml_axes.add_patch(polygon)
 
 
-    def draw_curve(self, curve, stroke_color, stroke_width, stroke_dash_array,
-                   z_order):
+    def draw_curve(self, curve, stroke_color, stroke_width, stroke_dash_array, layer, sublayer):
         for v_index in range(len(curve)):
             vertices = [(curve[v_index]['startX'], self.graph_info.extents['maxY'] - curve[v_index]['startY'])]
             codes = [Path.MOVETO]
@@ -151,17 +150,17 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
             curve = PathPatch(Path(vertices, codes),
                               edgecolor=self.graph_info.find_color_value(stroke_color, False),
                               facecolor='none', linewidth=stroke_width,
-                              capstyle='butt', zorder=z_order, antialiased=True)
+                              capstyle='butt', zorder=layer, antialiased=True)
             self.sbml_axes.add_patch(curve)
 
     def draw_text(self, x, y, width, height,
                    plain_text, font_color, font_family, font_size, font_style, font_weight,
-                   v_text_anchor, h_text_anchor, zorder):
+                   v_text_anchor, h_text_anchor, layer, sublayer):
         y = self.graph_info.extents['maxY'] - (y + height)
         self.sbml_axes.text(x + 0.5 * width, y + 0.5 * height, plain_text,
                      color=font_color, fontfamily=font_family, fontsize=font_size,
                      fontstyle=font_style, fontweight=font_weight,
-                     va=v_text_anchor, ha=h_text_anchor, zorder=zorder)
+                     va=v_text_anchor, ha=h_text_anchor, zorder=layer)
 
     def export(self, file_name=""):
         if len(self.sbml_axes.patches):
