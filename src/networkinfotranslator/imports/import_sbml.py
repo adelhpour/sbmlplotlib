@@ -267,8 +267,8 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                         'rel': self.sbml_network.getRadialGradientFocalY(gradient['id'])}}
             # get radius
             gradient['features']['radius'] = \
-                {'abs': 0.0,
-                    'rel': self.sbml_network.getRadialGradientRadius(gradient['id'])}
+                {'abs': self.sbml_network.getRadialGradientRadius(gradient['id']),
+                 'rel': 0.0}
 
     def extract_line_ending_features(self, line_ending):
         line_ending['features'] = {}
@@ -420,13 +420,13 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_geometric_shape_general_features(self, entity_id, graphical_object_index, geometric_shape_index):
         geometric_shape_general_features = {}
         # get stroke color
-        if self.sbml_network.isSetBorderColor(entity_id, graphical_object_index):
-            geometric_shape_general_features['strokeColor'] = self.sbml_network.getBorderColor(entity_id,
+        if self.sbml_network.isSetGeometricShapeBorderColor(entity_id, graphical_object_index):
+            geometric_shape_general_features['strokeColor'] = self.sbml_network.getGeometricShapeBorderColor(entity_id,
                                                                                                    graphical_object_index)
 
         # get stroke width
-        if self.sbml_network.isSetBorderWidth(entity_id, graphical_object_index):
-            geometric_shape_general_features['strokeWidth'] = self.sbml_network.getBorderWidth(entity_id,
+        if self.sbml_network.isSetGeometricShapeBorderWidth(entity_id, graphical_object_index):
+            geometric_shape_general_features['strokeWidth'] = self.sbml_network.getGeometricShapeBorderWidth(entity_id,
                                                                                                    graphical_object_index)
 
         # get stroke dash array
@@ -736,8 +736,8 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         rectangle_shape_info = {'shape': "rectangle"}
 
         # get fill color
-        if self.sbml_network.isSetFillColor(entity_id, graphical_object_index):
-            rectangle_shape_info['fillColor'] = self.sbml_network.getFillColor(entity_id, graphical_object_index)
+        if self.sbml_network.isSetGeometricShapeFillColor(entity_id, graphical_object_index):
+            rectangle_shape_info['fillColor'] = self.sbml_network.getGeometricShapeFillColor(entity_id, graphical_object_index)
 
         # get position x
         if self.sbml_network.isSetGeometricShapeX(entity_id, graphical_object_index):
@@ -824,8 +824,8 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         ellipse_shape_info = {'shape': "ellipse"}
 
         # get fill color
-        if self.sbml_network.isSetFillColor(entity_id, graphical_object_index):
-            ellipse_shape_info['fillColor'] = self.sbml_network.getFillColor(entity_id, graphical_object_index)
+        if self.sbml_network.isSetGeometricShapeFillColor(entity_id, graphical_object_index):
+            ellipse_shape_info['fillColor'] = self.sbml_network.getGeometricShapeFillColor(entity_id, graphical_object_index)
 
         # get position cx
         if self.sbml_network.isSetGeometricShapeCenterX(entity_id, graphical_object_index):
@@ -892,8 +892,8 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         polygon_shape_info = {'shape': "polygon"}
 
         # get fill color
-        if self.sbml_network.isSetFillColor(entity_id, graphical_object_index):
-            polygon_shape_info['fillColor'] = self.sbml_network.getFillColor(entity_id, graphical_object_index)
+        if self.sbml_network.isSetGeometricShapeFillColor(entity_id, graphical_object_index):
+            polygon_shape_info['fillColor'] = self.sbml_network.getGeometricShapeFillColor(entity_id, graphical_object_index)
 
         # get fill rule
         if self.sbml_network.isSetFillRule(entity_id, graphical_object_index):
