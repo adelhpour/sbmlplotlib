@@ -103,6 +103,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
             for srg_index in range(self.sbml_network.getNumSpeciesReferenceGlyphs(reaction_id, rg_index)):
                 species_reference = {'reaction': reaction_id}
                 species_reference['reaction_glyph_index'] = rg_index
+                species_reference['reaction_glyph_id'] = self.sbml_network.getNthReactionGlyphId(reaction_id, rg_index)
                 species_reference['species'] = self.sbml_network.getSpeciesReferenceSpeciesId(reaction_id, rg_index, srg_index)
                 species_reference['species_glyph_id'] = self.sbml_network.getSpeciesReferenceSpeciesGlyphId(reaction_id, rg_index, srg_index)
                 species_reference['species_reference_glyph_index'] = srg_index
