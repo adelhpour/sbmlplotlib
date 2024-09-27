@@ -1,5 +1,6 @@
 from .imports.import_sbml import NetworkInfoImportFromSBMLModel
 from .imports.import_network_editor import NetworkInfoImportFromNetworkEditor
+from .imports.import_escher import NetworkInfoImportFromEscher
 from .exports.export_sbml import NetworkInfoExportToSBMLModel
 from .exports.export_network_editor import NetworkInfoExportToNetworkEditor
 from .exports.export_cytoscapejs import NetworkInfoExportToCytoscapeJs
@@ -38,6 +39,19 @@ def import_sbml_export_network_editor(import_file, export_file=""):
     export_to_network_editor = NetworkInfoExportToNetworkEditor()
     export_to_network_editor.extract_graph_info(import_from_sbml)
     return export_to_network_editor.export(export_file)
+
+def import_sbml_export_to_escher(import_file, export_file=""):
+    import_from_sbml = NetworkInfoImportFromSBMLModel()
+    import_from_sbml.extract_info(import_file)
+    export_to_escher = NetworkInfoExportToEscher()
+    export_to_escher.extract_graph_info(import_from_sbml)
+    export_to_escher.export(export_file)
+
+def import_eshcer_export_to_sbml(import_file, export_file=""):
+    import_from_escher = NetworkInfoImportFromEscher()
+    import_from_escher.extract_info(import_file)
+
+    return ""
 
 def import_sbml_export_to_escher(import_file, export_file=""):
     import_from_sbml = NetworkInfoImportFromSBMLModel()
