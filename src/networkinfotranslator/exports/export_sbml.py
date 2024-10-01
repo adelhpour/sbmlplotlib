@@ -31,12 +31,13 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             self.add_line_ending(line_ending)
 
     def set_layout_dimensions(self):
-        self.layout.setDimensions(libsbml.Dimensions(self.layoutns,
+        self._get_layout().setDimensions(libsbml.Dimensions(self.layoutns,
                                                      self.graph_info.extents['maxX'] - self.graph_info.extents['minX'],
                                                      self.graph_info.extents['maxY'] - self.graph_info.extents['minY']))
 
     def set_render_background_color(self):
-        self.global_render.setBackgroundColor(self.graph_info.background_color)
+        if self.graph_info.background_color:
+            self._get_global_render().setBackgroundColor(self.graph_info.background_color)
 
     @staticmethod
     def check(value, message):
@@ -55,14 +56,11 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
 
     def create_model(self):
         # document
-        sbmlns = libsbml.SBMLNamespaces(3, 1, "layout", 1)
+        sbmlns = libsbml.SBMLNamespaces(3, 1)
         try:
             self.document = libsbml.SBMLDocument(sbmlns)
         except ValueError:
             raise SystemExit('Could not create SBMLDocumention object')
-        self.document.setPkgRequired("layout", False)
-        self.document.enablePackage(libsbml.RenderExtension.getXmlnsL3V1V1(), "render", True)
-        self.document.setPkgRequired("render", False)
 
         # model
         model = self.document.createModel()
@@ -70,41 +68,60 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
         self.check(model.setId("__main"), 'setting model id')
         self.check(model.setMetaId("__main"), 'setting model meta id')
 
-        # layout
-        self.layoutns = libsbml.LayoutPkgNamespaces(3, 1, 1)
-        lmplugin = model.getPlugin("layout")
-        if lmplugin is None:
-            print("[Fatal Error] Layout Extension Level " + str(self.layoutns.getLevel()) +
-                  " Version " + str(self.layoutns.getVersion()) +
-                  " package version " + str(self.layoutns.getPackageVersion()) +
-                  " is not registered.")
-            sys.exit(1)
-        self.layout = lmplugin.createLayout()
-        self.layout.setId("NetworkInfoTranslator_Layout")
+    def _get_layout(self):
+        if self.layout is None:
+            self.document.enablePackage(libsbml.LayoutExtension.getXmlnsL3V1V1(), "layout", True)
+            self.document.setPkgRequired("layout", False)
+            self.layoutns = libsbml.LayoutPkgNamespaces(3, 1, 1)
+            lmplugin = self.document.model.getPlugin("layout")
+            if lmplugin is None:
+                print("[Fatal Error] Layout Extension Level " + str(self.layoutns.getLevel()) +
+                      " Version " + str(self.layoutns.getVersion()) +
+                      " package version " + str(self.layoutns.getPackageVersion()) +
+                      " is not registered.")
+                sys.exit(1)
+            self.layout = lmplugin.createLayout()
+            self.layout.setId("NetworkInfoTranslator_Layout")
 
-        # global render
-        self.renderns = libsbml.RenderPkgNamespaces(3, 1, 1)
-        grplugin = lmplugin.getListOfLayouts().getPlugin("render")
-        if grplugin is None:
-            print("[Fatal Error] Render Extension Level " + str(self.renderns.getLevel()) +
-                  " Version " + str(self.renderns.getVersion()) +
-                  " package version " + str(self.renderns.getPackageVersion()) +
-                  " is not registered.")
-            sys.exit(1)
-        self.global_render = grplugin.createGlobalRenderInformation()
-        self.global_render.setId("NetworkInfoTranslator_Global_Render")
+        return self.layout
 
-        # local render
-        lrplugin = self.layout.getPlugin("render")
-        if lrplugin is None:
-            print("[Fatal Error] Render Extension Level " + str(self.renderns.getLevel()) +
-                  " Version " + str(self.renderns.getVersion()) +
-                  " package version " + str(self.renderns.getPackageVersion()) +
-                  " is not registered.")
-            sys.exit(1)
-        self.local_render = lrplugin.createLocalRenderInformation()
-        self.local_render.setId("NetworkInfoTranslator_Local_Render")
-        self.local_render.setReferenceRenderInformation("NetworkInfoTranslator_Global_Render")
+    def _get_global_render(self):
+        if self.global_render is None:
+            if self.renderns is None:
+                self.document.enablePackage(libsbml.RenderExtension.getXmlnsL3V1V1(), "render", True)
+                self.document.setPkgRequired("render", False)
+                self.renderns = libsbml.RenderPkgNamespaces(3, 1, 1)
+            lmplugin = self.document.model.getPlugin("layout")
+            grplugin = lmplugin.getListOfLayouts().getPlugin("render")
+            if grplugin is None:
+                print("[Fatal Error] Render Extension Level " + str(self.renderns.getLevel()) +
+                      " Version " + str(self.renderns.getVersion()) +
+                      " package version " + str(self.renderns.getPackageVersion()) +
+                      " is not registered.")
+                sys.exit(1)
+            self.global_render = grplugin.createGlobalRenderInformation()
+            self.global_render.setId("NetworkInfoTranslator_Global_Render")
+
+        return self.global_render
+
+    def _get_local_render(self):
+        if self.local_render is None:
+            if self.renderns is None:
+                self.document.enablePackage(libsbml.RenderExtension.getXmlnsL3V1V1(), "render", True)
+                self.document.setPkgRequired("render", False)
+                self.renderns = libsbml.RenderPkgNamespaces(3, 1, 1)
+            lrplugin = self._get_layout().getPlugin("render")
+            if lrplugin is None:
+                print("[Fatal Error] Render Extension Level " + str(self.renderns.getLevel()) +
+                      " Version " + str(self.renderns.getVersion()) +
+                      " package version " + str(self.renderns.getPackageVersion()) +
+                      " is not registered.")
+                sys.exit(1)
+            self.local_render = lrplugin.createLocalRenderInformation()
+            self.local_render.setId("NetworkInfoTranslator_Local_Render")
+            self.local_render.setReferenceRenderInformation("NetworkInfoTranslator_Global_Render")
+
+        return self.local_render
 
     def add_compartment(self, compartment):
         if 'referenceId' in list(compartment.keys()):
@@ -174,7 +191,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
 
     def add_compartment_glyph(self, compartment):
         if 'id' in list(compartment.keys()):
-            compartment_glyph = self.layout.createCompartmentGlyph()
+            compartment_glyph = self._get_layout().createCompartmentGlyph()
             compartment_glyph.setId(compartment['id'])
             compartment_glyph.setCompartmentId(compartment['referenceId'])
             self.set_glyph_bounding_box(compartment, compartment_glyph)
@@ -187,7 +204,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
 
     def add_species_glyph(self, species):
         if 'id' in list(species.keys()):
-            species_glyph = self.layout.createSpeciesGlyph()
+            species_glyph = self._get_layout().createSpeciesGlyph()
             species_glyph.setId(species['id'])
             species_glyph.setSpeciesId(species['referenceId'])
             self.set_glyph_bounding_box(species, species_glyph)
@@ -199,7 +216,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
 
     def add_reaction_glyph(self, reaction):
         if 'id' in list(reaction.keys()):
-            reaction_glyph = self.layout.createReactionGlyph()
+            reaction_glyph = self._get_layout().createReactionGlyph()
             reaction_glyph.setId(reaction['id'])
             reaction_glyph.setReactionId(reaction['referenceId'])
             self.set_glyph_bounding_box(reaction, reaction_glyph)
@@ -216,10 +233,10 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
                     self.add_species_reference_glyph(sr, reaction_glyph)
 
     def add_species_reference_glyph(self, species_reference, reaction_glyph):
-        if 'id' in list(species_reference.keys()) and 'speciesGlyph' in list(species_reference.keys()):
+        if 'id' in list(species_reference.keys()) and 'speciesGlyphId' in list(species_reference.keys()):
             species_reference_glyph = reaction_glyph.createSpeciesReferenceGlyph()
             species_reference_glyph.setId(species_reference['id'])
-            species_reference_glyph.setSpeciesGlyphId(species_reference['speciesGlyph'])
+            species_reference_glyph.setSpeciesGlyphId(species_reference['speciesGlyphId'])
             species_reference_glyph.setSpeciesReferenceId(species_reference['referenceId'])
             if species_reference['role'].lower() == "substrate" or species_reference['role'].lower() == "reactant":
                 species_reference_glyph.setRole(libsbml.SPECIES_ROLE_SUBSTRATE)
@@ -238,7 +255,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
 
     def add_text_glyph(self, text, go_glyph):
         if 'id' in list(text.keys()):
-            text_glyph = self.layout.createTextGlyph()
+            text_glyph = self._get_layout().createTextGlyph()
             text_glyph.setId(text['id'])
             text_glyph.setOriginOfTextId(go_glyph.getId())
             text_glyph.setGraphicalObjectId(go_glyph.getId())
@@ -247,8 +264,10 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             self.add_local_style(text)
 
     def add_local_style(self, go):
-        if 'features' in list(go.keys()):
-            style = self.local_render.createLocalStyle()
+        if 'features' in list(go.keys()) and ('graphicalShape' in list(go['features'].keys())
+                                              or 'graphicalCurve' in list(go['features'].keys())
+                                              or 'graphicalText' in list(go['features'].keys())):
+            style = self._get_local_render().createLocalStyle()
             if 'styleName' in list(go['features'].keys()):
                 style.setId(go['features']['styleName'])
             else:
@@ -621,7 +640,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             render_group.setVTextAnchor(features['vTextAnchor'])
 
     def add_color(self, color):
-        color_definition = self.global_render.createColorDefinition()
+        color_definition = self._get_global_render().createColorDefinition()
         color_definition.setId(color['id'])
         if 'features' in list(color.keys()):
             color_definition.setValue(color['features']['value'])
@@ -631,7 +650,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             gradient_definition = None
             # linear gradient
             if 'start' in list(gradient['features'].keys()) and 'end' in list(gradient['features'].keys()):
-                gradient_definition = self.global_render.createLinearGradientDefinition()
+                gradient_definition = self._get_global_render().createLinearGradientDefinition()
                 gradient_definition.setX1(libsbml.RelAbsVector(gradient['features']['start']['x']['abs'],
                                                                gradient['features']['start']['x']['rel']))
                 gradient_definition.setY1(libsbml.RelAbsVector(gradient['features']['start']['y']['abs'],
@@ -644,7 +663,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             elif 'center' in list(gradient['features'].keys()) and \
                     'focalPoint' in list(gradient['features'].keys() and \
                                          'radius' in list(gradient['features'].keys())):
-                gradient_definition = self.global_render.createRadialGradientDefinition()
+                gradient_definition = self._get_global_render().createRadialGradientDefinition()
                 gradient_definition.setCx(libsbml.RelAbsVector(gradient['features']['center']['x']['abs'],
                                                                gradient['features']['center']['x']['rel']))
                 gradient_definition.setCy(libsbml.RelAbsVector(gradient['features']['center']['y']['abs'],
