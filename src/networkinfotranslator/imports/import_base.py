@@ -17,7 +17,7 @@ class NetworkInfoImportBase:
         self.gradients.clear()
         self.line_endings.clear()
         self.extents = {'minX': 0, 'maxX': 0, 'minY': 0, 'maxY': 0}
-        self.background_color = "white"
+        self.background_color = ""
 
     def find_compartment(self, compartment_reference_id):
         for compartment in self.compartments:
@@ -135,3 +135,24 @@ class NetworkInfoImportBase:
         # gradients
         for gradient in self.gradients:
             self.extract_gradient_features(gradient)
+
+    def extract_compartment_features(self, compartment):
+        pass
+
+    def extract_species_features(self, species):
+        pass
+
+    def extract_reaction_features(self, reaction):
+        pass
+
+    def extract_species_reference_features(self, species_reference):
+        pass
+
+    def extract_line_ending_features(self, line_ending):
+        pass
+
+    def extract_color_features(self, color):
+        pass
+
+    def extract_gradient_features(self, gradient):
+        pass
