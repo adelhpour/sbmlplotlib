@@ -49,7 +49,7 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             else:
                 err_msg = 'Error encountered trying to ' + message + '.' \
                           + 'LibSBML returned error code ' + str(value) + ': "' \
-                          + OperationReturnValue_toString(value).strip() + '"'
+                          + libsbml.OperationReturnValue_toString(value).strip() + '"'
                 raise SystemExit(err_msg)
         else:
             return
@@ -125,41 +125,43 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
 
     def add_compartment(self, compartment):
         if 'referenceId' in list(compartment.keys()):
-            c = self.document.model.createCompartment()
-            self.check(c, 'create compartment ' + compartment['referenceId'])
-            self.check(c.setId(compartment['referenceId']), 'set compartment id')
-            self.check(c.setConstant(True), 'set compartment "constant"')
-            self.check(c.setSize(1), 'set compartment "size"')
-            self.check(c.setSpatialDimensions(3), 'set compartment dimensions')
+            if not self.document.model.getCompartment(compartment['referenceId']):
+                c = self.document.model.createCompartment()
+                self.check(c, 'create compartment ' + compartment['referenceId'])
+                self.check(c.setId(compartment['referenceId']), 'set compartment id')
+                self.check(c.setConstant(True), 'set compartment "constant"')
+                self.check(c.setSize(1), 'set compartment "size"')
+                self.check(c.setSpatialDimensions(3), 'set compartment dimensions')
             self.add_compartment_glyph(compartment)
 
     def add_species(self, species):
         if 'referenceId' in list(species.keys()):
-            s = self.document.model.createSpecies()
-            self.check(s, 'create species ' + species['referenceId'])
-            self.check(s.setId(species['referenceId']), 'set species ' + species['referenceId'] + ' id')
-            if 'compartment' in list(species.keys()):
-                self.check(s.setCompartment(species['compartment']),
-                           'set species' + species['referenceId'] + ' compartment')
-            self.check(s.setConstant(False), 'set "constant" attribute on ' + species['referenceId'])
-            self.check(s.setInitialAmount(0), 'set initial amount for ' + species['id'])
-            self.check(s.setBoundaryCondition(False), 'set "boundaryCondition" on ' + species['id'])
-            self.check(s.setHasOnlySubstanceUnits(False), 'set "hasOnlySubstanceUnits" on ' + species['id'])
+            if not self.document.model.getSpecies(species['referenceId']):
+                s = self.document.model.createSpecies()
+                self.check(s, 'create species ' + species['referenceId'])
+                self.check(s.setId(species['referenceId']), 'set species ' + species['referenceId'] + ' id')
+                if 'compartment' in list(species.keys()):
+                    self.check(s.setCompartment(species['compartment']),
+                               'set species' + species['referenceId'] + ' compartment')
+                self.check(s.setConstant(False), 'set "constant" attribute on ' + species['referenceId'])
+                self.check(s.setInitialAmount(0), 'set initial amount for ' + species['id'])
+                self.check(s.setBoundaryCondition(False), 'set "boundaryCondition" on ' + species['id'])
+                self.check(s.setHasOnlySubstanceUnits(False), 'set "hasOnlySubstanceUnits" on ' + species['id'])
             self.add_species_glyph(species)
 
     def add_reaction(self, reaction):
         if 'referenceId' in list(reaction.keys()):
-            r = self.document.model.createReaction()
-            self.check(r, 'create reaction ' + reaction['referenceId'])
-            self.check(r.setId(reaction['referenceId']), 'set reaction ' + reaction['referenceId'] + ' id')
-            self.check(r.setReversible(False), 'set reaction ' + reaction['referenceId'] + ' reversibility flag')
-            self.check(r.setFast(False), 'set reaction ' + reaction['referenceId'] + ' "fast" attribute')
+            if not self.document.model.getReaction(reaction['referenceId']):
+                r = self.document.model.createReaction()
+                self.check(r, 'create reaction ' + reaction['referenceId'])
+                self.check(r.setId(reaction['referenceId']), 'set reaction ' + reaction['referenceId'] + ' id')
+                self.check(r.setReversible(False), 'set reaction ' + reaction['referenceId'] + ' reversibility flag')
+                self.check(r.setFast(False), 'set reaction ' + reaction['referenceId'] + ' "fast" attribute')
 
-            # species references
-            if 'speciesReferences' in list(reaction.keys()):
-                for sr in reaction['speciesReferences']:
-                    self.add_species_reference(sr, r)
-
+                # species references
+                if 'speciesReferences' in list(reaction.keys()):
+                    for sr in reaction['speciesReferences']:
+                        self.add_species_reference(sr, r)
             self.add_reaction_glyph(reaction)
 
     def add_species_reference(self, species_reference, reaction):
@@ -250,6 +252,12 @@ class NetworkInfoExportToSBMLModel(NetworkInfoExportBase):
             elif species_reference['role'].lower() == "sideproduct" or species_reference[
                 'role'].lower() == "side product":
                 species_reference_glyph.setRole(libsbml.SPECIES_ROLE_SIDEPRODUCT)
+            elif species_reference['role'].lower() == "modifier":
+                species_reference_glyph.setRole(libsbml.SPECIES_ROLE_MODIFIER)
+            elif species_reference['role'].lower() == "activator":
+                species_reference_glyph.setRole(libsbml.SPECIES_ROLE_ACTIVATOR)
+            elif species_reference['role'].lower() == "inhibitor":
+                species_reference_glyph.setRole(libsbml.SPECIES_ROLE_INHIBITOR)
             self.set_glyph_curve(species_reference, species_reference_glyph)
             self.add_local_style(species_reference)
 

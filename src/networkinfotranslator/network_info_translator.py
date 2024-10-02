@@ -41,7 +41,7 @@ def import_sbml_export_network_editor(import_file, export_file=""):
     return export_to_network_editor.export(export_file)
 
 def import_sbml_export_to_escher(import_file, export_file=""):
-    import_from_sbml = NetworkInfoImportFromSBMLModel(display_reactions_text_label=True)
+    import_from_sbml = NetworkInfoImportFromSBMLModel(use_name_as_text_label=False, display_reactions_text_label=True)
     import_from_sbml.extract_info(import_file)
     export_to_escher = NetworkInfoExportToEscher()
     export_to_escher.extract_graph_info(import_from_sbml)
