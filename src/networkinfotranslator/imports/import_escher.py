@@ -55,7 +55,7 @@ class NetworkInfoImportFromEscher(NetworkInfoImportBase):
 
     def _extract_metabolite_node(self, node_info, node_id):
         sbml_node = self._extract_sbml_node(node_info, node_id)
-        sbml_node['texts'] = self._extract_sbml_species_texts(node_info, sbml_node['features'], node_id)
+        sbml_node['texts'] = self._extract_sbml_node_texts(node_info, sbml_node['features'], node_id)
         sbml_node['compartment'] = self._get_default_compartment_id()
         self.species.append(sbml_node)
 
@@ -124,43 +124,55 @@ class NetworkInfoImportFromEscher(NetworkInfoImportBase):
         if 'y' in list(node_info.keys()):
             return node_info['y'] - 0.5 * height
 
-    def _extract_sbml_species_texts(self, node_info, node_features, node_id):
+    def _extract_sbml_node_texts(self, node_info, node_features, node_id):
         texts = []
         if 'name' in list(node_info.keys()):
             texts.append({'id': self._get_sbml_sid_compatible_id(node_id) + "_TextGlyph_1",
-                          'features': self._extract_sbml_species_text_features(node_info, node_features)})
+                          'features': self._extract_sbml_node_text_features(node_info, node_features)})
 
         return texts
 
-    def _extract_sbml_species_text_features(self, node_info, node_features):
-        bounding_box = {'width': self._extract_sbml_species_text_width(node_features),
-                        'height': self._extract_sbml_species_text_height(node_features),
-                        'x': self._extract_sbml_species_text_x(node_info, node_features),
-                        'y': self._extract_sbml_species_text_y(node_info, node_features)}
+    def _extract_sbml_node_text_features(self, node_info, node_features):
+        bounding_box = {'width': self._extract_sbml_node_text_width(node_features, node_info),
+                        'height': self._extract_sbml_node_text_height(node_features, node_info),
+                        'x': self._extract_sbml_node_text_x(node_info, node_features),
+                        'y': self._extract_sbml_node_text_y(node_info, node_features)}
         # todo escher website examples show bigg_id as plainText, so we don't pass name as plainText (might need to be changed)
         return {'plainText': node_info['bigg_id'], 'boundingBox': bounding_box}
 
-    @staticmethod
-    def _extract_sbml_species_text_width(node_features):
-        return node_features['boundingBox']['width']
+    def _extract_sbml_node_text_width(self, node_features, node_info):
+        if 'node_type' in list(node_info.keys()) and node_info['node_type'] == 'metabolite':
+            return node_features['boundingBox']['width']
 
-    @staticmethod
-    def _extract_sbml_species_text_height(node_features):
-        return node_features['boundingBox']['height']
+        return self._get_default_reaction_text_width()
 
-    def _extract_sbml_species_text_x(self, node_info, node_features):
+    def _extract_sbml_node_text_height(self, node_features, node_info):
+        if 'node_type' in list(node_info.keys()) and node_info['node_type'] == 'metabolite':
+            return node_features['boundingBox']['height']
+
+        return self._get_default_reaction_text_height()
+
+    def _extract_sbml_node_text_x(self, node_info, node_features):
+        x = node_features['boundingBox']['x'] - 0.5 * node_features['boundingBox']['width']
         if 'label_x' in list(node_info.keys()):
-            return node_info['label_x'] - 0.5 * node_features['boundingBox'][
-                'width'] - self._get_text_horizontal_padding()
+            x = node_info['label_x'] - 0.5 * node_features['boundingBox']['width']
+            if 'node_type' in list(node_info.keys()) and node_info['node_type'] == 'metabolite':
+                x += self._get_species_text_horizontal_padding()
+            else:
+                x += self._get_reaction_text_horizontal_padding()
 
-        return 0.0
+        return x
 
-    def _extract_sbml_species_text_y(self, node_info, node_features):
+    def _extract_sbml_node_text_y(self, node_info, node_features):
+        y = node_features['boundingBox']['y'] - 0.5 * node_features['boundingBox']['height']
         if 'label_y' in list(node_info.keys()):
-            return node_info['label_y'] - 0.5 * node_features['boundingBox'][
-                'height'] - self._get_text_vertical_padding()
+            y = node_info['label_y'] - 0.5 * node_features['boundingBox']['height']
+            if 'node_type' in list(node_info.keys()) and node_info['node_type'] == 'metabolite':
+                y += self._get_species_text_vertical_padding()
+            else:
+                y += self._get_reaction_text_vertical_padding()
 
-        return 0.0
+        return y
 
     def _extract_sbml_reaction(self, reaction_info, reaction_id):
         sbml_reaction = self._find_sbml_reaction(reaction_info, reaction_id)
@@ -168,48 +180,10 @@ class NetworkInfoImportFromEscher(NetworkInfoImportBase):
             reaction_id = sbml_reaction['id']
             if 'bigg_id' in list(reaction_info.keys()):
                 sbml_reaction['referenceId'] = self._get_sbml_sid_compatible_id(reaction_info['bigg_id'])
-            sbml_reaction['texts'] = self._extract_sbml_reaction_texts(reaction_info, sbml_reaction['features'],
+            sbml_reaction['texts'] = self._extract_sbml_node_texts(reaction_info, sbml_reaction['features'],
                                                                        reaction_id)
             sbml_reaction['speciesReferences'] = self._extract_sbml_reaction_species_references(reaction_info,
                                                                                                 reaction_id)
-
-    def _extract_sbml_reaction_texts(self, node_info, node_features, node_id):
-        texts = []
-        if 'name' in list(node_info.keys()):
-            texts.append({'id': self._get_sbml_sid_compatible_id(node_id) + "_TextGlyph_1",
-                          'features': self._extract_sbml_reaction_text_features(node_info, node_features)})
-
-        return texts
-
-    def _extract_sbml_reaction_text_features(self, node_info, node_features):
-        bounding_box = {'width': self._extract_sbml_reaction_text_width(node_features),
-                        'height': self._extract_sbml_reaction_text_height(node_features),
-                        'x': self._extract_sbml_reaction_text_x(node_info, node_features),
-                        'y': self._extract_sbml_reaction_text_y(node_info, node_features)}
-        # todo escher website examples show bigg_id as plainText, so we don't pass name as plainText (might need to be changed)
-        return {'plainText': node_info['bigg_id'], 'boundingBox': bounding_box}
-
-    @staticmethod
-    def _extract_sbml_reaction_text_width(node_features):
-        return node_features['boundingBox']['width']
-
-    @staticmethod
-    def _extract_sbml_reaction_text_height(node_features):
-        return node_features['boundingBox']['height']
-
-    def _extract_sbml_reaction_text_x(self, node_info, node_features):
-        if 'label_x' in list(node_info.keys()):
-            return node_info['label_x'] - 0.5 * node_features['boundingBox'][
-                'width'] - self._get_text_horizontal_padding()
-
-        return 0.0
-
-    def _extract_sbml_reaction_text_y(self, node_info, node_features):
-        if 'label_y' in list(node_info.keys()):
-            return node_info['label_y'] - 0.5 * node_features['boundingBox'][
-                'height'] - self._get_text_vertical_padding()
-
-        return 0.0
 
     def _extract_sbml_reaction_species_references(self, reaction_info, reaction_id):
         species_references = []
@@ -466,6 +440,12 @@ class NetworkInfoImportFromEscher(NetworkInfoImportBase):
     def _get_default_reaction_height(self):
         return self._get_default_midmarker_height()
 
+    def _get_default_reaction_text_width(self):
+        return 5 * self._get_default_reaction_width()
+
+    def _get_default_reaction_text_height(self):
+        return 5 * self._get_default_reaction_height()
+
     def _get_default_species_radius(self, species):
         return 0.5 * math.sqrt(
             math.pow(self._get_default_species_width(species), 2) + math.pow(self._get_default_species_height(species),
@@ -476,11 +456,19 @@ class NetworkInfoImportFromEscher(NetworkInfoImportBase):
             math.pow(self._get_default_reaction_width(), 2) + math.pow(self._get_default_reaction_height(), 2))
 
     @staticmethod
-    def _get_text_horizontal_padding():
+    def _get_species_text_horizontal_padding():
         return 20
 
     @staticmethod
-    def _get_text_vertical_padding():
+    def _get_species_text_vertical_padding():
+        return -20
+
+    @staticmethod
+    def _get_reaction_text_horizontal_padding():
+        return 20
+
+    @staticmethod
+    def _get_reaction_text_vertical_padding():
         return -20
 
     @staticmethod
