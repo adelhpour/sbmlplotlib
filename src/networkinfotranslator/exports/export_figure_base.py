@@ -287,15 +287,9 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
             padding = 7.5
             center_x = 0.0
             center_y = 0.0
-            if role.lower() == "substrate" or role.lower() == "sidesubstrate" or role.lower() == "side substrate" or \
-                    role.lower() == "reactant":
-                if 'startPoint' in list(features.keys()) and 'endPoint' in list(features.keys()):
-                    center_x = features['startPoint']['x'] + (radius + padding) * math.cos(features['startSlope'])
-                    center_y = features['startPoint']['y'] + (radius + padding) * math.sin(features['startSlope'])
-            else:
-                if 'endPoint' in list(features.keys()) and 'endPoint' in list(features.keys()):
-                    center_x = features['endPoint']['x'] + (radius + padding) * math.cos(features['endSlope'])
-                    center_y = features['endPoint']['y'] + (radius + padding) * math.sin(features['endSlope'])
+            if 'endPoint' in list(features.keys()) and 'endPoint' in list(features.keys()):
+                center_x = features['endPoint']['x'] + (radius + padding) * math.cos(features['endSlope'])
+                center_y = features['endPoint']['y'] + (radius + padding) * math.sin(features['endSlope'])
 
             curve = [{'startX': center_x - radius, 'startY': center_y + radius,
                       'endX': center_x + radius, 'endY': center_y - radius}]

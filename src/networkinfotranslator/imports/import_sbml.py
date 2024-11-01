@@ -100,14 +100,14 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
             reaction = self.extract_go_object_features(reaction_id, rg_index)
             reaction['compartment'] = self.sbml_network.getCompartmentId(reaction_id)
             reaction['speciesReferences'] = []
-            for srg_index in range(self.sbml_network.getNumSpeciesReferenceGlyphs(reaction_id, rg_index)):
+            for srg_index in range(self.sbml_network.getNumSpeciesReferences(reaction_id, rg_index)):
                 species_reference = {'reaction': reaction_id}
                 species_reference['reaction_glyph_index'] = rg_index
                 species_reference['species'] = self.sbml_network.getSpeciesReferenceSpeciesId(reaction_id, rg_index, srg_index)
                 species_reference['species_glyph_id'] = self.sbml_network.getSpeciesReferenceSpeciesGlyphId(reaction_id, rg_index, srg_index)
                 species_reference['species_reference_glyph_index'] = srg_index
-                species_reference['id'] = self.sbml_network.getNthSpeciesReferenceGlyphSpeciesReferenceId(reaction_id, rg_index, srg_index)
-                species_reference['referenceId'] = self.sbml_network.getNthSpeciesReferenceGlyphId(reaction_id, rg_index, srg_index)
+                species_reference['id'] = self.sbml_network.getSpeciesReferenceId(reaction_id, rg_index, srg_index)
+                species_reference['referenceId'] = self.sbml_network.getSpeciesReferenceId(reaction_id, rg_index, srg_index)
                 if self.sbml_network.isSetSpeciesReferenceRole(reaction_id, rg_index, srg_index):
                     species_reference['role'] = self.sbml_network.getSpeciesReferenceRole(reaction_id, rg_index, srg_index)
                 reaction['speciesReferences'].append(species_reference)
@@ -420,14 +420,16 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_geometric_shape_general_features(self, entity_id, graphical_object_index, geometric_shape_index):
         geometric_shape_general_features = {}
         # get stroke color
-        if self.sbml_network.isSetGeometricShapeBorderColor(entity_id, graphical_object_index):
+        if self.sbml_network.isSetGeometricShapeBorderColor(entity_id, geometric_shape_index, graphical_object_index):
             geometric_shape_general_features['strokeColor'] = self.sbml_network.getGeometricShapeBorderColor(entity_id,
-                                                                                                   graphical_object_index)
+                                                                                                             geometric_shape_index,
+                                                                                                             graphical_object_index)
 
         # get stroke width
-        if self.sbml_network.isSetGeometricShapeBorderWidth(entity_id, graphical_object_index):
+        if self.sbml_network.isSetGeometricShapeBorderWidth(entity_id, geometric_shape_index, graphical_object_index):
             geometric_shape_general_features['strokeWidth'] = self.sbml_network.getGeometricShapeBorderWidth(entity_id,
-                                                                                                   graphical_object_index)
+                                                                                                             geometric_shape_index,
+                                                                                                             graphical_object_index)
 
         # get stroke dash array
         if self.sbml_network.getNumBorderDashes(entity_id, graphical_object_index):
@@ -490,18 +492,18 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_curve_features(self, entity_id, graphical_object_index):
         curve_features = {}
         # get stroke color
-        if self.sbml_network.isSetBorderColor(entity_id, graphical_object_index):
-            curve_features['strokeColor'] = self.sbml_network.getBorderColor(entity_id, graphical_object_index)
+        if self.sbml_network.isSetLineColor(entity_id, graphical_object_index):
+            curve_features['strokeColor'] = self.sbml_network.getLineColor(entity_id, graphical_object_index)
 
         # get stroke width
-        if self.sbml_network.isSetBorderWidth(entity_id, graphical_object_index):
-            curve_features['strokeWidth'] = self.sbml_network.getBorderWidth(entity_id, graphical_object_index)
+        if self.sbml_network.isSetLineWidth(entity_id, graphical_object_index):
+            curve_features['strokeWidth'] = self.sbml_network.getLineWidth(entity_id, graphical_object_index)
 
         # get stroke dash array
-        if self.sbml_network.getNumBorderDashes(entity_id, graphical_object_index):
+        if self.sbml_network.getNumLineDashes(entity_id, graphical_object_index):
             dash_array = []
-            for d_index in range(self.sbml_network.getNumBorderDashes(entity_id, graphical_object_index)):
-                dash_array.append(self.sbml_network.getNthBorderDash(entity_id, graphical_object_index, d_index))
+            for d_index in range(self.sbml_network.getNumLineDashes(entity_id, graphical_object_index)):
+                dash_array.append(self.sbml_network.getNthLineDash(entity_id, graphical_object_index, d_index))
             curve_features['strokeDashArray'] = tuple(dash_array)
 
         # get heads
@@ -516,18 +518,18 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_species_reference_curve_features(self, reaction_id, reaction_glyph_index, species_reference_glyph_index):
         curve_features = {}
         # get stroke color
-        if self.sbml_network.isSetSpeciesReferenceBorderColor(reaction_id, reaction_glyph_index, species_reference_glyph_index):
-            curve_features['strokeColor'] = self.sbml_network.getSpeciesReferenceBorderColor(reaction_id, reaction_glyph_index, species_reference_glyph_index)
+        if self.sbml_network.isSetSpeciesReferenceLineColor(reaction_id, reaction_glyph_index, species_reference_glyph_index):
+            curve_features['strokeColor'] = self.sbml_network.getSpeciesReferenceLineColor(reaction_id, reaction_glyph_index, species_reference_glyph_index)
 
         # get stroke width
-        if self.sbml_network.isSetSpeciesReferenceBorderWidth(reaction_id, reaction_glyph_index, species_reference_glyph_index):
-            curve_features['strokeWidth'] = self.sbml_network.getSpeciesReferenceBorderWidth(reaction_id, reaction_glyph_index, species_reference_glyph_index)
+        if self.sbml_network.isSetSpeciesReferenceLineWidth(reaction_id, reaction_glyph_index, species_reference_glyph_index):
+            curve_features['strokeWidth'] = self.sbml_network.getSpeciesReferenceLineWidth(reaction_id, reaction_glyph_index, species_reference_glyph_index)
 
         # get stroke dash array
-        if self.sbml_network.getNumSpeciesReferenceBorderDashes(reaction_id, reaction_glyph_index, species_reference_glyph_index):
+        if self.sbml_network.getNumSpeciesReferenceLineDashes(reaction_id, reaction_glyph_index, species_reference_glyph_index):
             dash_array = []
-            for d_index in range(self.sbml_network.getNumSpeciesReferenceBorderDashes(reaction_id, reaction_glyph_index, species_reference_glyph_index)):
-                dash_array.append(self.sbml_network.getSpeciesReferenceNthBorderDash(reaction_id, reaction_glyph_index, species_reference_glyph_index, d_index))
+            for d_index in range(self.sbml_network.getNumSpeciesReferenceLineDashes(reaction_id, reaction_glyph_index, species_reference_glyph_index)):
+                dash_array.append(self.sbml_network.getSpeciesReferenceNthLineDash(reaction_id, reaction_glyph_index, species_reference_glyph_index, d_index))
             curve_features['strokeDashArray'] = tuple(dash_array)
 
         # get heads
