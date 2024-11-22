@@ -130,28 +130,28 @@ class NetworkInfoExportToMatPlotLib(NetworkInfoExportToFigureBase):
         self.sbml_axes.add_patch(polygon)
 
 
-    def draw_curve(self, curve, stroke_color, stroke_width, stroke_dash_array, layer, sublayer):
-        for v_index in range(len(curve)):
-            vertices = [(curve[v_index]['startX'], self.graph_info.extents['maxY'] - curve[v_index]['startY'])]
+    def draw_curve(self, curve_points, stroke_color, stroke_width, stroke_dash_array, offset_x, offset_y, slope, layer, sublayer):
+        for v_index in range(len(curve_points)):
+            vertices = [(curve_points[v_index]['startX'], self.graph_info.extents['maxY'] - curve_points[v_index]['startY'])]
             codes = [Path.MOVETO]
-            if 'basePoint1X' in list(curve[v_index].keys()):
+            if 'basePoint1X' in list(curve_points[v_index].keys()):
                 vertices.append(
-                    (curve[v_index]['basePoint1X'], self.graph_info.extents['maxY'] - curve[v_index]['basePoint1Y']))
+                    (curve_points[v_index]['basePoint1X'], self.graph_info.extents['maxY'] - curve_points[v_index]['basePoint1Y']))
                 vertices.append(
-                    (curve[v_index]['basePoint2X'], self.graph_info.extents['maxY']- curve[v_index]['basePoint2Y']))
+                    (curve_points[v_index]['basePoint2X'], self.graph_info.extents['maxY']- curve_points[v_index]['basePoint2Y']))
                 codes.append(Path.CURVE4)
                 codes.append(Path.CURVE4)
                 codes.append(Path.CURVE4)
             else:
                 codes.append(Path.LINETO)
-            vertices.append((curve[v_index]['endX'], self.graph_info.extents['maxY'] - curve[v_index]['endY']))
+            vertices.append((curve_points[v_index]['endX'], self.graph_info.extents['maxY'] - curve_points[v_index]['endY']))
 
             # draw a curve
             curve = PathPatch(Path(vertices, codes),
                               edgecolor=self.graph_info.find_color_value(stroke_color, False),
                               facecolor='none', linewidth=stroke_width,
                               capstyle='butt', zorder=layer, antialiased=True)
-            self.sbml_axes.add_patch(curve)
+            self.sbml_axes.add_patch(curve_points)
 
     def draw_text(self, x, y, width, height,
                    plain_text, font_color, font_family, font_size, font_style, font_weight,

@@ -1,5 +1,6 @@
 from .export_figure_base import NetworkInfoExportToFigureBase
 import skia
+import math
 from PIL import Image as PIL_Image
 from PIL import ImageColor
 
@@ -106,7 +107,7 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
         ellipse['border'] = self._create_border_paint(stroke_color, stroke_width, stroke_dash_array)
         self._get_layer(layer, sublayer).ellipses.append(ellipse)
 
-    def draw_polygon(self, vertices, width, height,
+    def draw_polygon(self, vertices,
                      stroke_color, stroke_width, stroke_dash_array, fill_color,
                      offset_x, offset_y, slope, layer, sublayer):
         if len(vertices):
@@ -114,11 +115,11 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
             if abs(offset_x) > 0.001 or abs(offset_y) > 0.001:
                 polygon['translate'] = {'x': abs(self.graph_info.extents['minX']) + self.padding + offset_x,
                                         'y': abs(self.graph_info.extents['minY']) + self.padding + offset_y}
-                polygon['rotate'] = slope * 180.0 / 3.141592653589793
-                polygon['move-to-vertex'] = {'x':  vertices[0][0] - width, 'y': vertices[0][1] - 0.5 * height}
+                polygon['rotate'] = slope * 180.0 / math.pi
+                polygon['move-to-vertex'] = {'x':  vertices[0][0], 'y': vertices[0][1]}
                 line_to_vertices = []
                 for i in range(1, len(vertices)):
-                    line_to_vertices.append({'x': vertices[i][0] - width, 'y': vertices[i][1] - 0.5 * height})
+                    line_to_vertices.append({'x': vertices[i][0], 'y': vertices[i][1]})
                 polygon['line-to-vertices'] = line_to_vertices
             else:
                 polygon['move-to-vertex'] = {'x': abs(self.graph_info.extents['minX']) + self.padding + vertices[0][0],
@@ -133,24 +134,42 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
             polygon['border'] = self._create_border_paint(stroke_color, stroke_width, stroke_dash_array)
             self._get_layer(layer, sublayer).polygons.append(polygon)
 
-    def draw_curve(self, curve, stroke_color, stroke_width, stroke_dash_array, layer, sublayer):
-        vertices = []
-        for v_index in range(len(curve)):
-            vertex = {'move-to': {'x': abs(self.graph_info.extents['minX']) + self.padding + curve[v_index]['startX'],
-                                         'y': abs(self.graph_info.extents['minY']) + self.padding + curve[v_index]['startY']}}
-            if "basePoint1X" in list(curve[v_index].keys()) and "basePoint1Y" in list(curve[v_index].keys()):
-                vertex['cubic-to'] = {'b1x': abs(self.graph_info.extents['minX']) + self.padding + curve[v_index]['basePoint1X'],
-                                            'b1y': abs(self.graph_info.extents['minY']) + self.padding + curve[v_index]['basePoint1Y'],
-                                            'b2x': abs(self.graph_info.extents['minX']) + self.padding + curve[v_index]['basePoint2X'],
-                                            'b2y': abs(self.graph_info.extents['minY']) + self.padding + curve[v_index]['basePoint2Y'],
-                                            'x': abs(self.graph_info.extents['minX']) + self.padding + curve[v_index]['endX'],
-                                            'y': abs(self.graph_info.extents['minY']) + self.padding + curve[v_index]['endY']}
+    def draw_curve(self, curve_points, stroke_color, stroke_width, stroke_dash_array, offset_x, offset_y, slope, layer, sublayer):
+        if len(curve_points):
+            curve = {}
+            horziontal_offset = 0.0
+            vertical_offset = 0.0
+            if abs(offset_x) > 0.001 or abs(offset_y) > 0.001:
+                curve['translate'] = {'x': abs(self.graph_info.extents['minX']) + self.padding + offset_x,
+                                        'y': abs(self.graph_info.extents['minY']) + self.padding + offset_y}
+                curve['rotate'] = slope * 180.0 / math.pi
             else:
-                vertex['line-to'] = {'x': abs(self.graph_info.extents['minX']) + self.padding + curve[v_index]['endX'],
-                                     'y': abs(self.graph_info.extents['minY']) + self.padding + curve[v_index]['endY']}
-            vertices.append(vertex)
-        self._get_layer(layer, sublayer).curves.append({'vertices': vertices,
-                            'border': self._create_border_paint(stroke_color, stroke_width, stroke_dash_array)})
+                horziontal_offset = self.padding
+                vertical_offset = self.padding
+            vertices = []
+            for i in range(len(curve_points)):
+                vertex = {'startX': curve_points[i]['startX'] + horziontal_offset, 'startY': curve_points[i]['startY'] + vertical_offset,
+                            'endX': curve_points[i]['endX'] + horziontal_offset, 'endY': curve_points[i]['endY'] + vertical_offset}
+                if 'basePoint1X' in list(curve_points[i].keys()):
+                    vertex['basePoint1X'] = curve_points[i]['basePoint1X'] + horziontal_offset
+                else:
+                    vertex['basePoint1X'] = curve_points[i]['startX'] + horziontal_offset
+                if 'basePoint1Y' in list(curve_points[i].keys()):
+                    vertex['basePoint1Y'] = curve_points[i]['basePoint1Y'] + vertical_offset
+                else:
+                    vertex['basePoint1Y'] = curve_points[i]['startY'] + vertical_offset
+                if 'basePoint2X' in list(curve_points[i].keys()):
+                    vertex['basePoint2X'] = curve_points[i]['basePoint2X'] + horziontal_offset
+                else:
+                    vertex['basePoint2X'] = curve_points[i]['endX'] + horziontal_offset
+                if 'basePoint2Y' in list(curve_points[i].keys()):
+                    vertex['basePoint2Y'] = curve_points[i]['basePoint2Y'] + vertical_offset
+                else:
+                    vertex['basePoint2Y'] = curve_points[i]['endY'] + vertical_offset
+                vertices.append(vertex)
+            curve['vertices'] = vertices
+            curve['border'] = self._create_border_paint(stroke_color, stroke_width, stroke_dash_array)
+            self._get_layer(layer, sublayer).curves.append(curve)
 
     def draw_text(self, x, y, width, height,
                    plain_text, font_color, font_family, font_size, font_style, font_weight,
@@ -310,16 +329,19 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
                                 canvas.rotate(-polygon['rotate'])
                                 canvas.translate(-polygon['translate']['x'], -polygon['translate']['y'])
                         for curve in sublayer.curves:
+                            if 'translate' in list(curve.keys()):
+                                canvas.translate(curve['translate']['x'], curve['translate']['y'])
+                                canvas.rotate(curve['rotate'])
                             for vertex in curve['vertices']:
                                 path = skia.Path()
-                                path.moveTo(vertex['move-to']['x'], vertex['move-to']['y'])
-                                if 'cubic-to' in list(vertex.keys()):
-                                    path.cubicTo(vertex['cubic-to']['b1x'], vertex['cubic-to']['b1y'],
-                                                 vertex['cubic-to']['b2x'], vertex['cubic-to']['b2y'],
-                                                 vertex['cubic-to']['x'], vertex['cubic-to']['y'])
-                                else:
-                                    path.lineTo(vertex['line-to']['x'], vertex['line-to']['y'])
+                                path.moveTo(vertex['startX'], vertex['startY'])
+                                path.cubicTo(vertex['basePoint1X'], vertex['basePoint1Y'],
+                                             vertex['basePoint2X'], vertex['basePoint2Y'],
+                                             vertex['endX'], vertex['endY'])
                                 canvas.drawPath(path, curve["border"])
+                            if 'translate' in list(curve.keys()):
+                                canvas.rotate(-curve['rotate'])
+                                canvas.translate(-curve['translate']['x'], -curve['translate']['y'])
                         for text in sublayer.texts:
                             canvas.drawTextBlob(text['text'], text['x'], text['y'], text['text-paint'])
 
@@ -383,16 +405,19 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
                             canvas.rotate(-polygon['rotate'])
                             canvas.translate(-polygon['translate']['x'], -polygon['translate']['y'])
                     for curve in sublayer.curves:
+                        if 'translate' in list(curve.keys()):
+                            canvas.translate(curve['translate']['x'], curve['translate']['y'])
+                            canvas.rotate(curve['rotate'])
                         for vertex in curve['vertices']:
                             path = skia.Path()
-                            path.moveTo(vertex['move-to']['x'], vertex['move-to']['y'])
-                            if 'cubic-to' in list(vertex.keys()):
-                                path.cubicTo(vertex['cubic-to']['b1x'], vertex['cubic-to']['b1y'],
-                                             vertex['cubic-to']['b2x'], vertex['cubic-to']['b2y'],
-                                             vertex['cubic-to']['x'], vertex['cubic-to']['y'])
-                            else:
-                                path.lineTo(vertex['line-to']['x'], vertex['line-to']['y'])
+                            path.moveTo(vertex['startX'], vertex['startY'])
+                            path.cubicTo(vertex['basePoint1X'], vertex['basePoint1Y'],
+                                         vertex['basePoint2X'], vertex['basePoint2Y'],
+                                         vertex['endX'], vertex['endY'])
                             canvas.drawPath(path, curve["border"])
+                        if 'translate' in list(curve.keys()):
+                            canvas.rotate(-curve['rotate'])
+                            canvas.translate(-curve['translate']['x'], -curve['translate']['y'])
                     for text in sublayer.texts:
                         canvas.drawTextBlob(text['text'], text['x'], text['y'], text['text-paint'])
 
