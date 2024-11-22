@@ -14,7 +14,6 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
         self.reaction_layer = 4
         self.reaction_text_layer = 6
         self.species_layer = 5
-        self.null_graphical_shape_layer = 5
         self.species_text_layer = 6
 
 
@@ -49,7 +48,7 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
         if 'features' in list(reaction.keys()):
             # reaction curve
             if 'curve' in list(reaction['features']):
-                self.add_curve_to_scene(reaction['features'], layer=self.reaction_layer, sublayer=0)
+                self.add_curve_to_scene(reaction['features'], offset_x=0.0, offset_y=0.0, slope=0.0, layer=self.reaction_layer, sublayer=0)
             # reaction graphical shape
             elif 'boundingBox' in list(reaction['features']):
                 self.add_graphical_shape_to_scene(reaction['features'], layer=self.reaction_layer)
@@ -67,14 +66,10 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
     def add_species_reference(self, species_reference):
         if 'features' in list(species_reference.keys()):
             # species reference
-            self.add_curve_to_scene(species_reference['features'], layer=self.species_reference_layer, sublayer=0)
+            self.add_curve_to_scene(species_reference['features'], offset_x=0.0, offset_y=0.0, slope=0.0, layer=self.species_reference_layer, sublayer=0)
 
             # line endings
             self.add_line_endings_to_scene(species_reference['features'])
-
-            # null species
-            if self.has_null_species(species_reference):
-                self.add_null_graphical_shape_to_scene(species_reference)
 
     def add_graphical_shape_to_scene(self, features, offset_x=0.0, offset_y=0.0, slope=0.0, layer=0):
         if 'boundingBox' in list(features.keys()):
@@ -172,7 +167,7 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                                                            0.01 * features['graphicalShape']['geometricShapes'][gs_index]['vertices'][v_index]['basePoint2Y'][
                                                                'rel'] * bbox_height + bbox_y}
                                     curve_features['curve'].append(element_)
-                                self.add_curve_to_scene(curve_features, layer, gs_index)
+                                self.add_curve_to_scene(curve_features, offset_x, offset_y, slope, layer, gs_index)
 
                         # draw a rounded rectangle
                         elif features['graphicalShape']['geometricShapes'][gs_index]['shape'] == 'rectangle':
@@ -250,11 +245,8 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                         elif features['graphicalShape']['geometricShapes'][gs_index]['shape'] == 'polygon':
                             if 'vertices' in list(features['graphicalShape']['geometricShapes'][gs_index].keys()):
                                 vertices = np.empty((0, 2))
-                                origin_x = 0.0
-                                origin_y = 0.0
-                                if not offset_x and not offset_y:
-                                    origin_x = bbox_x
-                                    origin_y = bbox_y
+                                origin_x = bbox_x
+                                origin_y = bbox_y
                                 for v_index in range(len(features['graphicalShape']['geometricShapes'][gs_index]['vertices'])):
                                     vertices = np.append(vertices,
                                                          np.array([[features['graphicalShape']['geometricShapes'][gs_index]['vertices'][v_index]
@@ -265,7 +257,7 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                                                                     ['renderPointY']['abs'] +
                                                                     0.01 * features['graphicalShape']['geometricShapes'][gs_index]['vertices'][v_index]
                                                                     ['renderPointY']['rel'] * bbox_height + origin_y]]), axis=0)
-                                self.draw_polygon(vertices, bbox_width, bbox_height,
+                                self.draw_polygon(vertices,
                                               stroke_color, stroke_width, stroke_dash_array, fill_color,
                                               offset_x, offset_y, slope, layer, gs_index)
 
@@ -275,31 +267,7 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                                                stroke_color, stroke_width, stroke_dash_array, fill_color,
                                                offset_x, offset_y, slope, layer, 0)
 
-    def add_null_graphical_shape_to_scene(self, species_reference):
-        if 'features' in list(species_reference.keys()) and 'role' in list(species_reference.keys()):
-            features = species_reference['features']
-            role = species_reference['role']
-            stroke_color = 'black'
-            stroke_width = 2.0
-            stroke_dash_array = 'solid'
-            fill_color = 'white'
-            radius = 12.5
-            padding = 7.5
-            center_x = 0.0
-            center_y = 0.0
-            if 'endPoint' in list(features.keys()) and 'endPoint' in list(features.keys()):
-                center_x = features['endPoint']['x'] + (radius + padding) * math.cos(features['endSlope'])
-                center_y = features['endPoint']['y'] + (radius + padding) * math.sin(features['endSlope'])
-
-            curve = [{'startX': center_x - radius, 'startY': center_y + radius,
-                      'endX': center_x + radius, 'endY': center_y - radius}]
-
-            self.draw_ellipse(center_x, center_y, radius, radius,
-                              stroke_color, stroke_width, stroke_dash_array, fill_color,
-                              0, 0, 0, self.null_graphical_shape_layer, 0)
-            self.draw_curve(curve, stroke_color, stroke_width, stroke_dash_array, self.null_graphical_shape_layer, 1)
-
-    def add_curve_to_scene(self, features, layer, sublayer):
+    def add_curve_to_scene(self, features, offset_x, offset_y, slope, layer, sublayer):
         if 'curve' in list(features.keys()):
             # default features
             stroke_color = 'black'
@@ -315,7 +283,7 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                         and not features['graphicalCurve']['strokeDashArray'] == 'solid':
                     stroke_dash_array = features['graphicalCurve']['strokeDashArray']
 
-            self.draw_curve(features['curve'], stroke_color, stroke_width, stroke_dash_array, layer, sublayer)
+            self.draw_curve(features['curve'], stroke_color, stroke_width, stroke_dash_array, offset_x, offset_y, slope, layer, sublayer)
 
     def add_text_to_scene(self, features, layer, sublayer = 0):
         if 'plainText' in list(features.keys()) and 'boundingBox' in list(features.keys()):
@@ -440,15 +408,6 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                                                           offset_y=features['endPoint']['y'],
                                                           slope=features['endSlope'], layer=self.line_ending_layer)
 
-    @staticmethod
-    def has_null_species(species_reference):
-        if 'species' in list(species_reference.keys()) and not species_reference['species'] and \
-                'species_glyph_id' in list(species_reference.keys()) and \
-                species_reference['species_glyph_id'].lower().find("dummy") != -1:
-            return True
-
-        return False
-
     def draw_background_canvas(self, background_color):
         pass
 
@@ -471,13 +430,12 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
                      offset_x, offset_y, slope, layer, sublayer):
         pass
 
-    def draw_polygon(self, vertices, width, height,
+    def draw_polygon(self, vertices,
                      stroke_color, stroke_width, stroke_dash_array, fill_color,
                      offset_x, offset_y, slope, layer, sublayer):
         pass
 
-    def draw_curve(self, curve_shape, stroke_color, stroke_width, stroke_dash_array,
-                     layer, sublayer):
+    def draw_curve(self, curve_points, stroke_color, stroke_width, stroke_dash_array, offset_x, offset_y, slope, layer, sublayer):
         pass
 
     def draw_text(self, position_x, position_y, bbox_width, bbox_height,

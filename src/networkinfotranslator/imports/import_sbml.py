@@ -12,10 +12,14 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         self.display_compartments_text_label = display_compartments_text_label
         self.display_species_text_label = display_species_text_label
         self.display_reactions_text_label = display_reactions_text_label
+        self.empty_species_ids = []
 
     def extract_info(self, graph):
         super().extract_info(graph)
-        self.sbml_network = libsbmlnetwork.LibSBMLNetwork(graph)
+        if isinstance(graph, libsbmlnetwork.LibSBMLNetwork):
+            self.sbml_network = graph
+        else:
+            self.sbml_network = libsbmlnetwork.LibSBMLNetwork(graph)
         self.extract_layout_info()
         self.extract_render_info()
 
@@ -95,6 +99,11 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
             species['compartment'] = self.sbml_network.getCompartmentId(species_id)
             self.species.append(species)
 
+    def add_empty_species(self, empty_species_id):
+        self.empty_species_ids.append(empty_species_id)
+        species = self.extract_go_object_features(empty_species_id, 0)
+        self.species.append(species)
+
     def add_reaction(self, reaction_id):
         for rg_index in range(self.sbml_network.getNumReactionGlyphs(reaction_id)):
             reaction = self.extract_go_object_features(reaction_id, rg_index)
@@ -110,6 +119,10 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                 species_reference['referenceId'] = self.sbml_network.getSpeciesReferenceId(reaction_id, rg_index, srg_index)
                 if self.sbml_network.isSetSpeciesReferenceRole(reaction_id, rg_index, srg_index):
                     species_reference['role'] = self.sbml_network.getSpeciesReferenceRole(reaction_id, rg_index, srg_index)
+                if self.sbml_network.isSetSpeciesReferenceEmptySpeciesGlyph(reaction_id, rg_index, srg_index):
+                    empty_species_id = self.sbml_network.getSpeciesReferenceEmptySpeciesGlyphId(reaction_id, rg_index, srg_index)
+                    if empty_species_id == species_reference['species_glyph_id']:
+                        self.add_empty_species(empty_species_id)
                 reaction['speciesReferences'].append(species_reference)
             self.reactions.append(reaction)
 
@@ -143,7 +156,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_species_features(self, species):
         if species['referenceId']:
             species['features'] = self.extract_go_general_features(species['referenceId'], species['index'])
-            if self.display_species_text_label:
+            if self.display_species_text_label and not species['referenceId'] in self.empty_species_ids:
                 species['texts'] = self.extract_go_text_features(species['referenceId'], species['index'])
             self.extract_extents(self.sbml_network.getX(species['referenceId'], species['index']),
                                  self.sbml_network.getY(species['referenceId'], species['index']),
@@ -478,15 +491,15 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_line_ending_geometric_shape_exclusive_features(self, line_ending_id, geometric_shape_index):
         if self.sbml_network.isLineEndingImage(line_ending_id):
             return self.extract_line_ending_image_shape_features(line_ending_id, geometric_shape_index)
-        elif self.sbml_network.isLineEndingRenderCurve(line_ending_id):
+        elif self.sbml_network.isLineEndingRenderCurve(line_ending_id, geometric_shape_index):
             return self.extract_line_ending_curve_shape_features(line_ending_id, geometric_shape_index)
-        elif self.sbml_network.isLineEndingText(line_ending_id):
+        elif self.sbml_network.isLineEndingText(line_ending_id, geometric_shape_index):
             return self.extract_line_ending_text_shape_features(line_ending_id, geometric_shape_index)
-        elif self.sbml_network.isLineEndingRectangle(line_ending_id):
+        elif self.sbml_network.isLineEndingRectangle(line_ending_id, geometric_shape_index):
             return self.extract_line_ending_rectangle_shape_features(line_ending_id, geometric_shape_index)
-        elif self.sbml_network.isLineEndingEllipse(line_ending_id):
+        elif self.sbml_network.isLineEndingEllipse(line_ending_id, geometric_shape_index):
             return self.extract_line_ending_ellipse_shape_features(line_ending_id, geometric_shape_index)
-        elif self.sbml_network.isLineEndingPolygon(line_ending_id):
+        elif self.sbml_network.isLineEndingPolygon(line_ending_id, geometric_shape_index):
             return self.extract_line_ending_polygon_shape_features(line_ending_id, geometric_shape_index)
 
     def extract_curve_features(self, entity_id, graphical_object_index):
@@ -601,25 +614,24 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
 
         return image_shape_info
 
-    def extract_curve_shape_features(self, entity_id, graphical_object_index, geometric_shape_index):
+    def extract_curve_shape_features(self, entity_id, geometric_shape_index, graphical_object_index):
         # set shape
         curve_shape_info = {'shape': "renderCurve"}
-
         vertices_ = []
-        for v_index in range(self.sbml_network.getNumCurveSegments(entity_id, graphical_object_index)):
+        for v_index in range(self.sbml_network.getGeometricShapeNumSegments(entity_id, geometric_shape_index, graphical_object_index)):
             vertex_ = {}
-            vertex_['renderPointX'] = {'abs': self.sbml_network.getCurveSegmentStartPointX(entity_id, graphical_object_index, v_index),
+            vertex_['renderPointX'] = {'abs': self.sbml_network.getGeometricShapeSegmentX(entity_id, v_index, geometric_shape_index, graphical_object_index),
                                        'rel': 0.0}
-            vertex_['renderPointY'] = {'abs': self.sbml_network.getCurveSegmentStartPointY(entity_id, graphical_object_index, v_index),
+            vertex_['renderPointY'] = {'abs': self.sbml_network.getGeometricShapeSegmentY(entity_id, v_index, geometric_shape_index, graphical_object_index),
                                        'rel': 0.0}
-            if self.sbml_network.isCurveSegmentCubicBezier(entity_id, graphical_object_index, v_index):
-                vertex_['basePoint1X'] = {'abs': self.sbml_network.getCurveSegmentBasePoint1X(entity_id, graphical_object_index, v_index),
+            if self.sbml_network.isGeometricShapeSegmentCubicBezier(entity_id, v_index, geometric_shape_index, graphical_object_index):
+                vertex_['basePoint1X'] = {'abs': self.sbml_network.getGeometricShapeSegmentBasePoint1X(entity_id, v_index, geometric_shape_index, graphical_object_index),
                                           'rel': 0.0}
-                vertex_['basePoint1Y'] = {'abs': self.sbml_network.getCurveSegmentBasePoint1Y(entity_id, graphical_object_index, v_index),
+                vertex_['basePoint1Y'] = {'abs': self.sbml_network.getGeometricShapeSegmentBasePoint1Y(entity_id, v_index, geometric_shape_index, graphical_object_index),
                                           'rel': 0.0}
-                vertex_['basePoint2X'] = {'abs': self.sbml_network.getCurveSegmentBasePoint2X(entity_id, graphical_object_index, v_index),
+                vertex_['basePoint2X'] = {'abs': self.sbml_network.getGeometricShapeSegmentBasePoint2X(entity_id, v_index, geometric_shape_index, graphical_object_index),
                                           'rel': 0.0}
-                vertex_['basePoint2Y'] = {'abs': self.sbml_network.getCurveSegmentBasePoint2Y(entity_id, graphical_object_index, v_index),
+                vertex_['basePoint2Y'] = {'abs': self.sbml_network.getGeometricShapeSegmentBasePoint2Y(entity_id, v_index, geometric_shape_index, graphical_object_index),
                                           'rel': 0.0}
             vertices_.append(vertex_)
         curve_shape_info['vertices'] = vertices_
@@ -631,21 +643,39 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         curve_shape_info = {'shape': "renderCurve"}
 
         vertices_ = []
-        for v_index in range(self.sbml_network.getNumLineEndingCurveSegments(line_ending_id)):
+        for v_index in range(
+                self.sbml_network.getLineEndingGeometricShapeNumSegments(line_ending_id, index=geometric_shape_index)):
             vertex_ = {}
-            vertex_['renderPointX'] = {'abs': self.sbml_network.getLineEndingCurveSegmentStartPointX(line_ending_id, v_index),
-                                       'rel': 0.0}
-            vertex_['renderPointY'] = {'abs': self.sbml_network.getLineEndingCurveSegmentStartPointY(line_ending_id, v_index),
-                                       'rel': 0.0}
-            if self.sbml_network.isLineEndingGeometricShapeSegmentCubicBezier(line_ending_id, v_index):
-                vertex_['basePoint1X'] = {'abs': self.sbml_network.getLineEndingCurveSegmentBasePoint1X(line_ending_id, v_index),
-                                          'rel': 0.0}
-                vertex_['basePoint1Y'] = {'abs': self.sbml_network.getLineEndingCurveSegmentBasePoint1Y(line_ending_id, v_index),
-                                          'rel': 0.0}
-                vertex_['basePoint2X'] = {'abs': self.sbml_network.getLineEndingCurveSegmentBasePoint2X(line_ending_id, v_index),
-                                          'rel': 0.0}
-                vertex_['basePoint2Y'] = {'abs': self.sbml_network.getLineEndingCurveSegmentBasePoint2Y(line_ending_id, v_index),
-                                          'rel': 0.0}
+            vertex_['renderPointX'] = {
+                'abs': self.sbml_network.getLineEndingGeometricShapeSegmentX(line_ending_id, segment_index=v_index,
+                                                                             index=geometric_shape_index),
+                'rel': 0.0}
+            vertex_['renderPointY'] = {
+                'abs': self.sbml_network.getLineEndingGeometricShapeSegmentY(line_ending_id, segment_index=v_index,
+                                                                             index=geometric_shape_index),
+                'rel': 0.0}
+            if self.sbml_network.isLineEndingGeometricShapeSegmentCubicBezier(line_ending_id, segment_index=v_index,
+                                                                              index=geometric_shape_index):
+                vertex_['basePoint1X'] = {
+                    'abs': self.sbml_network.getLineEndingGeometricShapeSegmentBasePoint1X(line_ending_id,
+                                                                                           segment_index=v_index,
+                                                                                           index=geometric_shape_index),
+                    'rel': 0.0}
+                vertex_['basePoint1Y'] = {
+                    'abs': self.sbml_network.getLineEndingGeometricShapeSegmentBasePoint1Y(line_ending_id,
+                                                                                           segment_index=v_index,
+                                                                                           index=geometric_shape_index),
+                    'rel': 0.0}
+                vertex_['basePoint2X'] = {
+                    'abs': self.sbml_network.getLineEndingGeometricShapeSegmentBasePoint2X(line_ending_id,
+                                                                                           segment_index=v_index,
+                                                                                           index=geometric_shape_index),
+                    'rel': 0.0}
+                vertex_['basePoint2Y'] = {
+                    'abs': self.sbml_network.getLineEndingGeometricShapeSegmentBasePoint2Y(line_ending_id,
+                                                                                           segment_index=v_index,
+                                                                                           index=geometric_shape_index),
+                    'rel': 0.0}
             vertices_.append(vertex_)
         curve_shape_info['vertices'] = vertices_
 
