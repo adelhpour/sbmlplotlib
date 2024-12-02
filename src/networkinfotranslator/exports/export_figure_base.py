@@ -15,6 +15,8 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
         self.reaction_text_layer = 6
         self.species_layer = 5
         self.species_text_layer = 6
+        self.additional_graphical_object_layer = 7
+        self.additional_graphical_object_text_layer = 8
 
 
     def reset(self):
@@ -70,6 +72,16 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
 
             # line endings
             self.add_line_endings_to_scene(species_reference['features'])
+
+    def add_additional_graphical_object(self, additional_graphical_object):
+        # additional graphical object
+        if 'features' in list(additional_graphical_object.keys()):
+            self.add_graphical_shape_to_scene(additional_graphical_object['features'], layer=self.additional_graphical_object_layer)
+        # additional graphical object text
+        if 'texts' in list(additional_graphical_object.keys()):
+            for text in additional_graphical_object['texts']:
+                if 'features' in list(text.keys()):
+                    self.add_text_to_scene(text['features'], layer=self.additional_graphical_object_text_layer)
 
     def add_graphical_shape_to_scene(self, features, offset_x=0.0, offset_y=0.0, slope=0.0, layer=0):
         if 'boundingBox' in list(features.keys()):
