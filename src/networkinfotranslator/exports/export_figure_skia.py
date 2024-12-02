@@ -273,8 +273,8 @@ class NetworkInfoExportToSkia(NetworkInfoExportToFigureBase):
                                                   positions=stop_positions)
 
     def _get_skia_color(self, color_name):
-        rgb_color = ImageColor.getrgb(self.graph_info.find_color_value(color_name, False))
-        return skia.Color(rgb_color[0], rgb_color[1], rgb_color[2])
+        rgb_color = ImageColor.getcolor(self.graph_info.find_color_value(color_name, False), mode="RGBA")
+        return skia.Color(rgb_color[0], rgb_color[1], rgb_color[2], rgb_color[3])
 
     def _export_as_pdf(self, file_name):
         stream = skia.FILEWStream(file_name)
