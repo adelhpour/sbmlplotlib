@@ -3,6 +3,7 @@ class NetworkInfoImportBase:
         self.compartments = []
         self.species = []
         self.reactions = []
+        self.additional_graphical_objects = []
         self.colors = []
         self.gradients = []
         self.line_endings = []
@@ -123,6 +124,10 @@ class NetworkInfoImportBase:
                 species_references = reaction['speciesReferences']
                 for species_reference in species_references:
                     self.extract_species_reference_features(species_reference)
+
+        # additional graphical objects
+        for additional_graphical_object in self.additional_graphical_objects:
+            self.extract_additional_graphical_object_features(additional_graphical_object)
 
         # line endings
         for line_ending in self.line_endings:

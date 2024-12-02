@@ -4,11 +4,10 @@ import math
 
 
 class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
-    def __init__(self, use_name_as_text_label=True, display_compartments_text_label=True,
+    def __init__(self, display_compartments_text_label=True,
                  display_species_text_label=True, display_reactions_text_label =False):
         super().__init__()
         self.sbml_network = None
-        self.use_name_as_text_label = use_name_as_text_label
         self.display_compartments_text_label = display_compartments_text_label
         self.display_species_text_label = display_species_text_label
         self.display_reactions_text_label = display_reactions_text_label
@@ -36,13 +35,16 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
 
     def extract_layout_features(self):
         for c_index in range(self.sbml_network.getNumCompartments()):
-            self.add_compartment(self.sbml_network.getNthCompartmentId(c_index))
+            self.add_compartment(self.sbml_network.getCompartmentId(c_index))
 
         for s_index in range(self.sbml_network.getNumSpecies()):
-            self.add_species(self.sbml_network.getNthSpeciesId(s_index))
+            self.add_species(self.sbml_network.getSpeciesId(s_index))
 
         for r_index in range(self.sbml_network.getNumReactions()):
-            self.add_reaction(self.sbml_network.getNthReactionId(r_index))
+            self.add_reaction(self.sbml_network.getReactionId(r_index))
+
+        for a_go_index in range(self.sbml_network.getNumAllAdditionalGraphicalObjects()):
+            self.add_additional_graphical_object(self.sbml_network.getAdditionalGraphicalObjectId(a_go_index))
 
     def extract_global_render_info(self):
         if not self.sbml_network.getNumGlobalRenderInformation() and\
@@ -55,15 +57,15 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
 
         # get colors info
         for c_index in range(self.sbml_network.getNumGlobalColors()):
-            self.add_color(self.sbml_network.getNthGlobalColorId(c_index))
+            self.add_color(self.sbml_network.getGlobalColorId(c_index))
 
         # get gradients info
         for g_index in range(self.sbml_network.getNumGlobalGradients()):
-            self.add_gradient(self.sbml_network.getNthGlobalGradientId(g_index))
+            self.add_gradient(self.sbml_network.getGlobalGradientId(g_index))
 
         # get line ending info
         for le_index in range(self.sbml_network.getNumGlobalLineEndings()):
-            self.add_line_ending(self.sbml_network.getNthGlobalLineEndingId(le_index))
+            self.add_line_ending(self.sbml_network.getGlobalLineEndingId(le_index))
 
     def extract_local_render_info(self):
         if self.sbml_network.getNumGlobalRenderInformation():
@@ -72,15 +74,15 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def extract_local_render_features(self):
         # get colors info
         for c_index in range(self.sbml_network.getNumLocalColors()):
-            self.add_color(self.sbml_network.getNthLocalColorId(c_index))
+            self.add_color(self.sbml_network.getLocalColorId(c_index))
 
         # get gradients info
         for g_index in range(self.sbml_network.getNumLocalGradients()):
-            self.add_gradient(self.sbml_network.getNthLocalGradientId(g_index))
+            self.add_gradient(self.sbml_network.getLocalGradientId(g_index))
 
         # get line ending info
         for le_index in range(self.sbml_network.getNumLocalLineEndings()):
-            self.add_line_ending(self.sbml_network.getNthLocalLineEndingId(le_index))
+            self.add_line_ending(self.sbml_network.getLocalLineEndingId(le_index))
 
     def extract_extents(self, bounding_box_x, bounding_box_y, bounding_box_width, bounding_box_height):
         self.extents['minX'] = min(self.extents['minX'], bounding_box_x)
@@ -96,7 +98,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def add_species(self, species_id):
         for sg_index in range(self.sbml_network.getNumSpeciesGlyphs(species_id)):
             species = self.extract_go_object_features(species_id, sg_index)
-            species['compartment'] = self.sbml_network.getCompartmentId(species_id)
+            species['compartment'] = self.sbml_network.getGraphicalObjectCompartmentId(species_id)
             self.species.append(species)
 
     def add_empty_species(self, empty_species_id):
@@ -107,7 +109,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
     def add_reaction(self, reaction_id):
         for rg_index in range(self.sbml_network.getNumReactionGlyphs(reaction_id)):
             reaction = self.extract_go_object_features(reaction_id, rg_index)
-            reaction['compartment'] = self.sbml_network.getCompartmentId(reaction_id)
+            reaction['compartment'] = self.sbml_network.getGraphicalObjectCompartmentId(reaction_id)
             reaction['speciesReferences'] = []
             for srg_index in range(self.sbml_network.getNumSpeciesReferences(reaction_id, rg_index)):
                 species_reference = {'reaction': reaction_id}
@@ -126,6 +128,10 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                 reaction['speciesReferences'].append(species_reference)
             self.reactions.append(reaction)
 
+    def add_additional_graphical_object(self, additional_graphical_object_id):
+        graphical_object = self.extract_go_object_features(additional_graphical_object_id, 0)
+        self.additional_graphical_objects.append(graphical_object)
+
     def add_color(self, color_id):
         self.colors.append({'id': color_id})
 
@@ -136,10 +142,10 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         self.line_endings.append({'id': line_ending_id})
 
     def extract_go_object_features(self, entity_id, graphical_object_index):
-        features = {'referenceId': entity_id, 'id': self.sbml_network.getNthGraphicalObjectId(entity_id, graphical_object_index),
+        features = {'referenceId': entity_id, 'id': self.sbml_network.getId(entity_id, graphical_object_index),
                     'index': graphical_object_index}
-        if self.sbml_network.getNthGraphicalObjectMetaId(entity_id, graphical_object_index):
-            features['metaId'] = self.sbml_network.getNthGraphicalObjectMetaId(entity_id, graphical_object_index)
+        if self.sbml_network.isSetMetaId(entity_id, graphical_object_index):
+            features['metaId'] = self.sbml_network.getMetaId(entity_id, graphical_object_index)
 
         return features
 
@@ -221,6 +227,15 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
                 species_reference['features']['curve'] = curve
                 species_reference['features']['graphicalCurve'] = self.extract_species_reference_curve_features(species_reference['reaction'], species_reference['reaction_glyph_index'], species_reference['species_reference_glyph_index'])
 
+    def extract_additional_graphical_object_features(self, additional_graphical_object):
+        if additional_graphical_object['referenceId']:
+            additional_graphical_object['features'] = self.extract_go_general_features(additional_graphical_object['referenceId'], additional_graphical_object['index'])
+            additional_graphical_object['texts'] = self.extract_go_text_features(additional_graphical_object['referenceId'], additional_graphical_object['index'])
+            self.extract_extents(self.sbml_network.getX(additional_graphical_object['referenceId'], additional_graphical_object['index']),
+                                 self.sbml_network.getY(additional_graphical_object['referenceId'], additional_graphical_object['index']),
+                                 self.sbml_network.getWidth(additional_graphical_object['referenceId'], additional_graphical_object['index']),
+                                 self.sbml_network.getHeight(additional_graphical_object['referenceId'], additional_graphical_object['index']))
+
     def extract_color_features(self, color):
         color['features'] = {}
         if self.sbml_network.isSetColorValue(color['id']):
@@ -296,8 +311,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         for text_glyph_index in range(self.sbml_network.getNumTextGlyphs(entity_id, graphical_object_index)):
             features = {'features': {'plainText': self.sbml_network.getText(entity_id,
                                                                             graphical_object_index=graphical_object_index,
-                                                                            text_glyph_index=text_glyph_index,
-                                                                            use_name_as_text_label=self.use_name_as_text_label),
+                                                                            text_glyph_index=text_glyph_index),
                                      'boundingBox': self.extract_text_bounding_box_features(entity_id,
                                                                                             graphical_object_index,
                                                                                             text_glyph_index),
@@ -376,7 +390,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         if self.sbml_network.getNumBorderDashes(entity_id, graphical_object_index):
             dash_array = []
             for d_index in range(self.sbml_network.getNumBorderDashes(entity_id, graphical_object_index)):
-                dash_array.append(self.sbml_network.getNthBorderDash(entity_id, graphical_object_index, d_index))
+                dash_array.append(self.sbml_network.getBorderDash(entity_id, graphical_object_index, d_index))
             render_group_general_features['strokeDashArray'] = tuple(dash_array)
         # get fill color
         if self.sbml_network.isSetFillColor(entity_id, graphical_object_index):
@@ -399,7 +413,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         if self.sbml_network.getNumLineEndingBorderDashes(line_ending_id):
             dash_array = []
             for d_index in range(self.sbml_network.getNumLineEndingBorderDashes(line_ending_id)):
-                dash_array.append(self.sbml_network.getLineEndingNthBorderDash(line_ending_id, d_index))
+                dash_array.append(self.sbml_network.getLineEndingBorderDash(line_ending_id, d_index))
             line_ending_render_group_general_features['strokeDashArray'] = tuple(dash_array)
         # get fill color
         if self.sbml_network.isSetLineEndingFillColor(line_ending_id):
@@ -448,7 +462,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         if self.sbml_network.getNumBorderDashes(entity_id, graphical_object_index):
             dash_array = []
             for d_index in range(self.sbml_network.getNumBorderDashes(entity_id, graphical_object_index)):
-                dash_array.append(self.sbml_network.getNthBorderDash(entity_id, graphical_object_index, d_index))
+                dash_array.append(self.sbml_network.getBorderDash(entity_id, graphical_object_index, d_index))
             geometric_shape_general_features['strokeDashArray'] = tuple(dash_array)
 
         return geometric_shape_general_features
@@ -467,7 +481,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         if self.sbml_network.getNumLineEndingBorderDashes(line_ending_id):
             dash_array = []
             for d_index in range(self.sbml_network.getNumLineEndingBorderDashes(line_ending_id)):
-                dash_array.append(self.sbml_network.getLineEndingNthBorderDash(line_ending_id, d_index))
+                dash_array.append(self.sbml_network.getLineEndingBorderDash(line_ending_id, d_index))
             geometric_shape_general_features['strokeDashArray'] = tuple(dash_array)
 
         return geometric_shape_general_features
@@ -516,7 +530,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         if self.sbml_network.getNumLineDashes(entity_id, graphical_object_index):
             dash_array = []
             for d_index in range(self.sbml_network.getNumLineDashes(entity_id, graphical_object_index)):
-                dash_array.append(self.sbml_network.getNthLineDash(entity_id, graphical_object_index, d_index))
+                dash_array.append(self.sbml_network.getLineDash(entity_id, graphical_object_index, d_index))
             curve_features['strokeDashArray'] = tuple(dash_array)
 
         # get heads
@@ -542,7 +556,7 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
         if self.sbml_network.getNumSpeciesReferenceLineDashes(reaction_id, reaction_glyph_index, species_reference_glyph_index):
             dash_array = []
             for d_index in range(self.sbml_network.getNumSpeciesReferenceLineDashes(reaction_id, reaction_glyph_index, species_reference_glyph_index)):
-                dash_array.append(self.sbml_network.getSpeciesReferenceNthLineDash(reaction_id, reaction_glyph_index, species_reference_glyph_index, d_index))
+                dash_array.append(self.sbml_network.getSpeciesReferenceLineDash(reaction_id, reaction_glyph_index, species_reference_glyph_index, d_index))
             curve_features['strokeDashArray'] = tuple(dash_array)
 
         # get heads

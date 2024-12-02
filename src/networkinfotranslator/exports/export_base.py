@@ -28,6 +28,10 @@ class NetworkInfoExportBase:
         for r in graph_info.reactions:
             self.add_reaction(r)
 
+        # additional graphical objects
+        for go in graph_info.additional_graphical_objects:
+            self.add_additional_graphical_object(go)
+
     def set_background(self, graph_info):
         pass
 
@@ -38,6 +42,9 @@ class NetworkInfoExportBase:
         pass
 
     def add_reaction(self, reaction):
+        pass
+
+    def add_additional_graphical_object(self, additional_graphical_object):
         pass
 
     def export(self, file_name):
