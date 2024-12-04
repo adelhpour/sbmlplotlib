@@ -18,7 +18,6 @@ class NetworkInfoExportToFigureBase(NetworkInfoExportBase):
         self.additional_graphical_object_layer = 7
         self.additional_graphical_object_text_layer = 8
 
-
     def reset(self):
         super().reset()
 

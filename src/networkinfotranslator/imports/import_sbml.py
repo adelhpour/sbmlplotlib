@@ -488,17 +488,17 @@ class NetworkInfoImportFromSBMLModel(NetworkInfoImportBase):
 
     def extract_geometric_shape_exclusive_features(self, entity_id, graphical_object_index, geometric_shape_index):
         if self.sbml_network.isImage(entity_id, geometric_shape_index, graphical_object_index):
-            return self.extract_image_shape_features(entity_id, geometric_shape_index, graphical_object_index)
+            return self.extract_image_shape_features(entity_id, graphical_object_index, geometric_shape_index)
         elif self.sbml_network.isRenderCurve(entity_id, geometric_shape_index, graphical_object_index):
-            return self.extract_curve_shape_features(entity_id, geometric_shape_index, graphical_object_index)
+            return self.extract_curve_shape_features(entity_id, graphical_object_index, geometric_shape_index)
         elif self.sbml_network.isText(entity_id, geometric_shape_index, graphical_object_index):
-            return self.extract_text_shape_features(entity_id, geometric_shape_index, graphical_object_index)
+            return self.extract_text_shape_features(entity_id, graphical_object_index, geometric_shape_index)
         elif self.sbml_network.isRectangle(entity_id, geometric_shape_index, graphical_object_index):
-            return self.extract_rectangle_shape_features(entity_id, geometric_shape_index, graphical_object_index)
+            return self.extract_rectangle_shape_features(entity_id, graphical_object_index, geometric_shape_index)
         elif self.sbml_network.isEllipse(entity_id, geometric_shape_index, graphical_object_index):
-            return self.extract_ellipse_shape_features(entity_id, geometric_shape_index, graphical_object_index)
+            return self.extract_ellipse_shape_features(entity_id, graphical_object_index, geometric_shape_index)
         elif self.sbml_network.isPolygon(entity_id, geometric_shape_index, graphical_object_index):
-            return self.extract_polygon_shape_features(entity_id, geometric_shape_index, graphical_object_index)
+            return self.extract_polygon_shape_features(entity_id, graphical_object_index, geometric_shape_index)
 
         return {'shape': "None"}
 
